@@ -1,0 +1,195 @@
+{% extends "base.html" %}
+
+{% block title %}{{ title }} - Sistema de Gestão Empresarial{% endblock %}
+
+{% block content %}
+<div class="d-sm-flex align-items-center justify-content-between mb-4">
+    <h1 class="h3 mb-0 text-light">
+        <i class="fas fa-building me-2"></i>{{ title }}
+    </h1>
+    <a href="{{ url_for('logistics.companies') }}" class="btn btn-secondary btn-sm">
+        <i class="fas fa-arrow-left fa-sm text-white-50 me-1"></i> Voltar
+    </a>
+</div>
+
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">Dados da Transportadora</h6>
+            </div>
+            <div class="card-body">
+                <form method="POST">
+                    {{ form.hidden_tag() }}
+                    
+                    <div class="row">
+                        <div class="col-md-8">
+                            <div class="mb-3">
+                                {{ form.name.label(class="form-label") }}
+                                {{ form.name(class="form-control") }}
+                                {% if form.name.errors %}
+                                    <div class="text-danger">{{ form.name.errors[0] }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                {{ form.company_type.label(class="form-label") }}
+                                {{ form.company_type(class="form-select") }}
+                                {% if form.company_type.errors %}
+                                    <div class="text-danger">{{ form.company_type.errors[0] }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                {{ form.cnpj.label(class="form-label") }}
+                                {{ form.cnpj(class="form-control") }}
+                                {% if form.cnpj.errors %}
+                                    <div class="text-danger">{{ form.cnpj.errors[0] }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                {{ form.contact_name.label(class="form-label") }}
+                                {{ form.contact_name(class="form-control") }}
+                                {% if form.contact_name.errors %}
+                                    <div class="text-danger">{{ form.contact_name.errors[0] }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                {{ form.email.label(class="form-label") }}
+                                {{ form.email(class="form-control") }}
+                                {% if form.email.errors %}
+                                    <div class="text-danger">{{ form.email.errors[0] }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                {{ form.phone.label(class="form-label") }}
+                                {{ form.phone(class="form-control") }}
+                                {% if form.phone.errors %}
+                                    <div class="text-danger">{{ form.phone.errors[0] }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <h6 class="mt-4 mb-3 text-primary">Endereço</h6>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                {{ form.address.label(class="form-label") }}
+                                {{ form.address(class="form-control") }}
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="mb-3">
+                                {{ form.city.label(class="form-label") }}
+                                {{ form.city(class="form-control") }}
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="mb-3">
+                                {{ form.state.label(class="form-label") }}
+                                {{ form.state(class="form-control") }}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        {{ form.zip_code.label(class="form-label") }}
+                        {{ form.zip_code(class="form-control", style="max-width: 200px;") }}
+                    </div>
+
+                    <h6 class="mt-4 mb-3 text-primary">Configurações de Serviço</h6>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                {{ form.delivery_time_min.label(class="form-label") }}
+                                {{ form.delivery_time_min(class="form-control") }}
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                {{ form.delivery_time_max.label(class="form-label") }}
+                                {{ form.delivery_time_max(class="form-control") }}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                {{ form.weight_limit.label(class="form-label") }}
+                                {{ form.weight_limit(class="form-control") }}
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                {{ form.volume_limit.label(class="form-label") }}
+                                {{ form.volume_limit(class="form-control") }}
+                            </div>
+                        </div>
+                    </div>
+
+                    <h6 class="mt-4 mb-3 text-primary">Preços</h6>
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                {{ form.price_per_kg.label(class="form-label") }}
+                                {{ form.price_per_kg(class="form-control") }}
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                {{ form.price_per_km.label(class="form-label") }}
+                                {{ form.price_per_km(class="form-control") }}
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                {{ form.minimum_price.label(class="form-label") }}
+                                {{ form.minimum_price(class="form-control") }}
+                            </div>
+                        </div>
+                    </div>
+
+                    <h6 class="mt-4 mb-3 text-primary">Configurações Avançadas</h6>
+                    <div class="mb-3">
+                        {{ form.api_token.label(class="form-label") }}
+                        {{ form.api_token(class="form-control") }}
+                        <div class="form-text">Token para integração com API da transportadora</div>
+                    </div>
+
+                    <div class="mb-3">
+                        {{ form.tracking_url.label(class="form-label") }}
+                        {{ form.tracking_url(class="form-control") }}
+                        <div class="form-text">URL base para rastreamento</div>
+                    </div>
+
+                    <div class="mb-3">
+                        {{ form.notes.label(class="form-label") }}
+                        {{ form.notes(class="form-control", rows="3") }}
+                    </div>
+
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                        <a href="{{ url_for('logistics.companies') }}" class="btn btn-secondary me-md-2">Cancelar</a>
+                        {{ form.submit(class="btn btn-primary") }}
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

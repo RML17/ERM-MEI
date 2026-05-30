@@ -1,0 +1,332 @@
+{% extends "base.html" %}
+
+{% block title %}Editar Nota Fiscal - Sistema de Gestão Financeira{% endblock %}
+
+{% block content %}
+<div class="d-sm-flex align-items-center justify-content-between mb-4">
+    <h1 class="h3 mb-0 text-light">Editar Nota Fiscal</h1>
+    <div>
+        <a href="{{ url_for('invoices.view', id=invoice.id) }}" class="btn btn-info btn-sm me-2">
+            <i class="fas fa-eye me-1"></i>Visualizar
+        </a>
+        <a href="{{ url_for('invoices.index') }}" class="btn btn-secondary btn-sm">
+            <i class="fas fa-arrow-left me-1"></i>Voltar para Lista
+        </a>
+    </div>
+</div>
+
+<div class="card shadow mb-4">
+    <div class="card-header py-3 d-flex justify-content-between align-items-center">
+        <h6 class="m-0 font-weight-bold text-primary">Informações da Nota Fiscal</h6>
+        <div>
+            <span class="badge bg-warning me-2">Nota #{{ invoice.invoice_number }}</span>
+            <span class="badge {% if invoice.status.value == 'Rascunho' %}bg-secondary{% elif invoice.status.value == 'Pendente' %}bg-warning{% elif invoice.status.value == 'Emitida' %}bg-info{% elif invoice.status.value == 'Aprovada' %}bg-success{% else %}bg-danger{% endif %}">
+                {{ invoice.status.value }}
+            </span>
+        </div>
+    </div>
+    <div class="card-body">
+        <form method="POST" action="{{ url_for('invoices.edit', id=invoice.id) }}">
+            {{ form.hidden_tag() }}
+            
+            <!-- Informações Gerais -->
+            <div class="row">
+                <div class="col-md-3 mb-3">
+                    <label for="{{ form.invoice_number.id }}" class="form-label">Número da Nota</label>
+                    {{ form.invoice_number(class="form-control" + (" is-invalid" if form.invoice_number.errors else "")) }}
+                    {% if form.invoice_number.errors %}
+                        <div class="invalid-feedback">
+                            {% for error in form.invoice_number.errors %}
+                                {{ error }}
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+                <div class="col-md-2 mb-3">
+                    <label for="{{ form.series.id }}" class="form-label">Série</label>
+                    {{ form.series(class="form-control" + (" is-invalid" if form.series.errors else "")) }}
+                    {% if form.series.errors %}
+                        <div class="invalid-feedback">
+                            {% for error in form.series.errors %}
+                                {{ error }}
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+                <div class="col-md-3 mb-3">
+                    <label for="{{ form.type.id }}" class="form-label">Tipo</label>
+                    {{ form.type(class="form-select" + (" is-invalid" if form.type.errors else "")) }}
+                    {% if form.type.errors %}
+                        <div class="invalid-feedback">
+                            {% for error in form.type.errors %}
+                                {{ error }}
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+                <div class="col-md-4 mb-3">
+                    <label for="{{ form.status.id }}" class="form-label">Status</label>
+                    {{ form.status(class="form-select" + (" is-invalid" if form.status.errors else "")) }}
+                    {% if form.status.errors %}
+                        <div class="invalid-feedback">
+                            {% for error in form.status.errors %}
+                                {{ error }}
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <div class="row">
+                <div class="col-md-3 mb-3">
+                    <label for="{{ form.issue_date.id }}" class="form-label">Data de Emissão</label>
+                    {{ form.issue_date(class="form-control" + (" is-invalid" if form.issue_date.errors else ""), type="date") }}
+                    {% if form.issue_date.errors %}
+                        <div class="invalid-feedback">
+                            {% for error in form.issue_date.errors %}
+                                {{ error }}
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+                <div class="col-md-3 mb-3">
+                    <label for="{{ form.operation_date.id }}" class="form-label">Data de Operação</label>
+                    {{ form.operation_date(class="form-control" + (" is-invalid" if form.operation_date.errors else ""), type="date") }}
+                    {% if form.operation_date.errors %}
+                        <div class="invalid-feedback">
+                            {% for error in form.operation_date.errors %}
+                                {{ error }}
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label for="{{ form.entity_id.id }}" class="form-label">Cliente/Fornecedor</label>
+                    {{ form.entity_id(class="form-select" + (" is-invalid" if form.entity_id.errors else "")) }}
+                    {% if form.entity_id.errors %}
+                        <div class="invalid-feedback">
+                            {% for error in form.entity_id.errors %}
+                                {{ error }}
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <div class="mb-3">
+                <label for="{{ form.notes.id }}" class="form-label">Observações</label>
+                {{ form.notes(class="form-control" + (" is-invalid" if form.notes.errors else ""), rows="3") }}
+                {% if form.notes.errors %}
+                    <div class="invalid-feedback">
+                        {% for error in form.notes.errors %}
+                            {{ error }}
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            </div>
+            
+            <hr>
+            
+            <!-- Itens da Nota -->
+            <h5 class="mb-3">Itens da Nota Fiscal</h5>
+            
+            <div id="invoiceItemsContainer">
+                {% for item_form in items %}
+                <div class="invoice-item card mb-3">
+                    <div class="card-body">
+                        <button type="button" class="btn btn-sm btn-danger float-end remove-item-btn">
+                            <i class="fas fa-times"></i>
+                        </button>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ item_form.product_id.id }}" class="form-label">Produto</label>
+                                {{ item_form.product_id(class="form-select" + (" is-invalid" if item_form.product_id.errors else "")) }}
+                                {% if item_form.product_id.errors %}
+                                    <div class="invalid-feedback">
+                                        {% for error in item_form.product_id.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-2 mb-3">
+                                <label for="{{ item_form.quantity.id }}" class="form-label">Quantidade</label>
+                                {{ item_form.quantity(class="form-control" + (" is-invalid" if item_form.quantity.errors else ""), type="number", step="0.001", min="0.001") }}
+                                {% if item_form.quantity.errors %}
+                                    <div class="invalid-feedback">
+                                        {% for error in item_form.quantity.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-2 mb-3">
+                                <label for="{{ item_form.unit_price.id }}" class="form-label">Preço Unitário</label>
+                                {{ item_form.unit_price(class="form-control" + (" is-invalid" if item_form.unit_price.errors else ""), type="number", step="0.01", min="0.01") }}
+                                {% if item_form.unit_price.errors %}
+                                    <div class="invalid-feedback">
+                                        {% for error in item_form.unit_price.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-2 mb-3">
+                                <label for="{{ item_form.discount.id }}" class="form-label">Desconto</label>
+                                {{ item_form.discount(class="form-control" + (" is-invalid" if item_form.discount.errors else ""), type="number", step="0.01", min="0") }}
+                                {% if item_form.discount.errors %}
+                                    <div class="invalid-feedback">
+                                        {% for error in item_form.discount.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-3 mb-3">
+                                <label for="{{ item_form.cfop.id }}" class="form-label">CFOP</label>
+                                {{ item_form.cfop(class="form-control" + (" is-invalid" if item_form.cfop.errors else "")) }}
+                                {% if item_form.cfop.errors %}
+                                    <div class="invalid-feedback">
+                                        {% for error in item_form.cfop.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-3 mb-3">
+                                <label class="form-label">Total do Item</label>
+                                <div class="form-control bg-light item-total">R$ 0,00</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            
+            <button type="button" id="addInvoiceItem" class="btn btn-success mb-4">
+                <i class="fas fa-plus me-1"></i>Adicionar Item
+            </button>
+            
+            <button type="button" id="calculateTaxes" class="btn btn-info mb-4 ms-2">
+                <i class="fas fa-calculator me-1"></i>Calcular Impostos
+            </button>
+            
+            <div class="row mt-3">
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-header">
+                            <h6 class="m-0 font-weight-bold text-primary">Impostos Aplicáveis</h6>
+                        </div>
+                        <div class="card-body">
+                            <div id="taxesContainer">
+                                {% if invoice.taxes.all() %}
+                                {% for tax in invoice.taxes %}
+                                <div class="row mb-2">
+                                    <div class="col-4">{{ tax.tax_type.value }}</div>
+                                    <div class="col-4">{{ "%.2f"|format(tax.tax_rate*100) }}%</div>
+                                    <div class="col-4">R$ {{ "%.2f"|format(tax.tax_value|float)|replace('.', ',') }}</div>
+                                </div>
+                                {% endfor %}
+                                {% else %}
+                                <p class="text-muted text-center">Clique em "Calcular Impostos" para ver os valores.</p>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-header">
+                            <h6 class="m-0 font-weight-bold text-primary">Resumo de Valores</h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-6">
+                                    <p class="mb-1">Total de Produtos:</p>
+                                </div>
+                                <div class="col-6 text-end">
+                                    <p class="mb-1 font-weight-bold" id="invoiceTotal">R$ {{ "%.2f"|format(invoice.total_products|float)|replace('.', ',') }}</p>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-6">
+                                    <p class="mb-1">Total de Impostos:</p>
+                                </div>
+                                <div class="col-6 text-end">
+                                    <p class="mb-1 font-weight-bold" id="taxTotal">R$ {{ "%.2f"|format(invoice.total_tax|float)|replace('.', ',') }}</p>
+                                </div>
+                            </div>
+                            <hr>
+                            <div class="row">
+                                <div class="col-6">
+                                    <p class="mb-0 h5">Valor Total:</p>
+                                </div>
+                                <div class="col-6 text-end">
+                                    <p class="mb-0 h5" id="grandTotal">R$ {{ "%.2f"|format(invoice.total_value|float)|replace('.', ',') }}</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <hr>
+            
+            <div class="d-flex justify-content-end">
+                <a href="{{ url_for('invoices.view', id=invoice.id) }}" class="btn btn-secondary me-2">Cancelar</a>
+                {{ form.submit(class="btn btn-primary") }}
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Template para novos itens -->
+<template id="invoiceItemTemplate">
+    <div class="invoice-item card mb-3">
+        <div class="card-body">
+            <button type="button" class="btn btn-sm btn-danger float-end remove-item-btn">
+                <i class="fas fa-times"></i>
+            </button>
+            
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">Produto</label>
+                    <select name="items-0-product_id" id="items-0-product_id" class="form-select" required>
+                        <option value="">Selecione um produto</option>
+                        {% for product in items[0].product_id.choices %}
+                        <option value="{{ product[0] }}">{{ product[1] }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-2 mb-3">
+                    <label class="form-label">Quantidade</label>
+                    <input type="number" name="items-0-quantity" id="items-0-quantity" class="form-control" step="0.001" min="0.001" required>
+                </div>
+                <div class="col-md-2 mb-3">
+                    <label class="form-label">Preço Unitário</label>
+                    <input type="number" name="items-0-unit_price" id="items-0-unit_price" class="form-control" step="0.01" min="0.01" required>
+                </div>
+                <div class="col-md-2 mb-3">
+                    <label class="form-label">Desconto</label>
+                    <input type="number" name="items-0-discount" id="items-0-discount" class="form-control" step="0.01" min="0" value="0">
+                </div>
+            </div>
+            
+            <div class="row">
+                <div class="col-md-3 mb-3">
+                    <label class="form-label">CFOP</label>
+                    <input type="text" name="items-0-cfop" id="items-0-cfop" class="form-control">
+                </div>
+                <div class="col-md-3 mb-3">
+                    <label class="form-label">Total do Item</label>
+                    <div class="form-control bg-light item-total">R$ 0,00</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</template>
+{% endblock %}

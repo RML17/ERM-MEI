@@ -1,0 +1,208 @@
+{% extends "base.html" %}
+
+{% block title %}Funcionários - Recursos Humanos{% endblock %}
+
+{% block content %}
+<div class="d-sm-flex align-items-center justify-content-between mb-4">
+    <h1 class="h3 mb-0 text-light">
+        <i class="fas fa-users me-2"></i>Gerenciamento de Funcionários
+    </h1>
+    <a href="#" class="btn btn-primary btn-sm">
+        <i class="fas fa-plus fa-sm text-white-50 me-1"></i> Novo Funcionário
+    </a>
+</div>
+
+<!-- Filtros de pesquisa -->
+<div class="card shadow mb-4">
+    <div class="card-header py-3">
+        <h6 class="m-0 font-weight-bold text-primary">Filtrar Funcionários</h6>
+    </div>
+    <div class="card-body">
+        <form method="GET" action="{{ url_for('hr.employees') }}">
+            <div class="row">
+                <div class="col-md-4 mb-3">
+                    <label class="form-label">Departamento</label>
+                    <select name="department" class="form-select">
+                        <option value="">Todos os departamentos</option>
+                        {% for dept in departments %}
+                        <option value="{{ dept.id }}" {% if selected_department == dept.id|string %}selected{% endif %}>
+                            {{ dept.name }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-4 mb-3">
+                    <label class="form-label">Status</label>
+                    <select name="status" class="form-select">
+                        <option value="active" {% if selected_status == 'active' %}selected{% endif %}>Ativos</option>
+                        <option value="inactive" {% if selected_status == 'inactive' %}selected{% endif %}>Inativos</option>
+                        <option value="on_leave" {% if selected_status == 'on_leave' %}selected{% endif %}>Em licença</option>
+                        <option value="terminated" {% if selected_status == 'terminated' %}selected{% endif %}>Desligados</option>
+                    </select>
+                </div>
+                <div class="col-md-4 d-flex align-items-end mb-3">
+                    <button type="submit" class="btn btn-primary me-2">
+                        <i class="fas fa-search fa-sm"></i> Filtrar
+                    </button>
+                    <a href="{{ url_for('hr.employees') }}" class="btn btn-secondary">
+                        <i class="fas fa-sync-alt fa-sm"></i> Limpar
+                    </a>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Lista de funcionários -->
+<div class="card shadow mb-4">
+    <div class="card-header py-3">
+        <h6 class="m-0 font-weight-bold text-primary">Lista de Funcionários</h6>
+    </div>
+    <div class="card-body">
+        {% if employees.items %}
+        <div class="table-responsive">
+            <table class="table table-bordered table-hover" id="funcionariosTable">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Nome</th>
+                        <th>Departamento</th>
+                        <th>Cargo</th>
+                        <th>Data de Contratação</th>
+                        <th>Status</th>
+                        <th>Ações</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for employee in employees.items %}
+                    <tr>
+                        <td>{{ employee.employee_number }}</td>
+                        <td>
+                            <a href="{{ url_for('hr.employee_detail', employee_id=employee.id) }}">
+                                {{ employee.first_name }} {{ employee.last_name }}
+                            </a>
+                        </td>
+                        <td>
+                            {% if employee.department %}
+                            {{ employee.department.name }}
+                            {% else %}
+                            -
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if employee.position %}
+                            {{ employee.position.title }}
+                            {% else %}
+                            -
+                            {% endif %}
+                        </td>
+                        <td>{{ employee.hire_date.strftime('%d/%m/%Y') }}</td>
+                        <td>
+                            {% if employee.status == 'active' %}
+                            <span class="badge bg-success">Ativo</span>
+                            {% elif employee.status == 'inactive' %}
+                            <span class="badge bg-secondary">Inativo</span>
+                            {% elif employee.status == 'on_leave' %}
+                            <span class="badge bg-warning">Em licença</span>
+                            {% elif employee.status == 'terminated' %}
+                            <span class="badge bg-danger">Desligado</span>
+                            {% else %}
+                            <span class="badge bg-info">{{ employee.status }}</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <div class="btn-group">
+                                <a href="{{ url_for('hr.employee_detail', employee_id=employee.id) }}" class="btn btn-sm btn-info">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                                <a href="#" class="btn btn-sm btn-primary">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        
+        <!-- Paginação -->
+        <div class="mt-3">
+            {% if employees.pages > 1 %}
+            <nav aria-label="Navegação entre páginas">
+                <ul class="pagination justify-content-center">
+                    {% if employees.has_prev %}
+                    <li class="page-item">
+                        <a class="page-link" href="{{ url_for('hr.employees', page=employees.prev_num, department=selected_department, status=selected_status) }}">
+                            <i class="fas fa-angle-left"></i>
+                        </a>
+                    </li>
+                    {% else %}
+                    <li class="page-item disabled">
+                        <span class="page-link"><i class="fas fa-angle-left"></i></span>
+                    </li>
+                    {% endif %}
+                    
+                    {% for page_num in employees.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2) %}
+                        {% if page_num %}
+                            {% if page_num == employees.page %}
+                            <li class="page-item active">
+                                <span class="page-link">{{ page_num }}</span>
+                            </li>
+                            {% else %}
+                            <li class="page-item">
+                                <a class="page-link" href="{{ url_for('hr.employees', page=page_num, department=selected_department, status=selected_status) }}">
+                                    {{ page_num }}
+                                </a>
+                            </li>
+                            {% endif %}
+                        {% else %}
+                            <li class="page-item disabled">
+                                <span class="page-link">...</span>
+                            </li>
+                        {% endif %}
+                    {% endfor %}
+                    
+                    {% if employees.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="{{ url_for('hr.employees', page=employees.next_num, department=selected_department, status=selected_status) }}">
+                            <i class="fas fa-angle-right"></i>
+                        </a>
+                    </li>
+                    {% else %}
+                    <li class="page-item disabled">
+                        <span class="page-link"><i class="fas fa-angle-right"></i></span>
+                    </li>
+                    {% endif %}
+                </ul>
+            </nav>
+            {% endif %}
+            <p class="text-center text-muted mt-2">
+                Mostrando {{ employees.items|length }} de {{ employees.total }} funcionários
+            </p>
+        </div>
+        {% else %}
+        <div class="text-center py-4">
+            <i class="fas fa-users fa-5x mb-3 text-muted"></i>
+            <p class="lead text-muted">Nenhum funcionário encontrado com os filtros aplicados.</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    $(document).ready(function() {
+        // Inicializa o DataTable com suporte à ordenação
+        $('#funcionariosTable').DataTable({
+            "paging": false,
+            "searching": false,
+            "info": false,
+            "language": {
+                "url": "//cdn.datatables.net/plug-ins/1.10.25/i18n/Portuguese-Brasil.json"
+            }
+        });
+    });
+</script>
+{% endblock %}

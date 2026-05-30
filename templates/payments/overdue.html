@@ -1,0 +1,109 @@
+{% extends "base.html" %}
+
+{% block title %}Pagamentos Vencidos{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+        <h1 class="h2 text-danger">
+            <i class="fas fa-exclamation-triangle"></i>
+            Pagamentos Vencidos
+        </h1>
+        <div class="btn-toolbar mb-2 mb-md-0">
+            <a href="{{ url_for('payments.index') }}" class="btn btn-secondary">
+                <i class="fas fa-arrow-left"></i> Todos os Pagamentos
+            </a>
+        </div>
+    </div>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    <div class="card">
+        <div class="card-body">
+            {% if payments %}
+            <div class="alert alert-warning">
+                <i class="fas fa-exclamation-triangle"></i>
+                <strong>Atenção!</strong> Existem {{ payments|length }} pagamento(s) vencido(s) que precisam de atenção imediata.
+            </div>
+            
+            <div class="table-responsive">
+                <table class="table table-striped table-hover">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Nota Fiscal</th>
+                            <th>Método</th>
+                            <th>Valor</th>
+                            <th>Valor Pago</th>
+                            <th>Data Vencimento</th>
+                            <th>Dias em Atraso</th>
+                            <th>Status</th>
+                            <th class="text-center">Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for payment in payments %}
+                        <tr class="table-danger">
+                            <td>{{ payment.id }}</td>
+                            <td>
+                                {% if payment.invoice %}
+                                    <a href="{{ url_for('invoices.view', id=payment.invoice.id) }}">
+                                        {{ payment.invoice.invoice_number }}
+                                    </a>
+                                {% else %}
+                                    <span class="text-muted">N/A</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ payment.payment_method.value if payment.payment_method else 'N/A' }}</td>
+                            <td>R$ {{ "%.2f"|format(payment.amount) }}</td>
+                            <td>R$ {{ "%.2f"|format(payment.paid_amount or 0) }}</td>
+                            <td>{{ payment.due_date.strftime('%d/%m/%Y') if payment.due_date else 'N/A' }}</td>
+                            <td>
+                                {% if payment.due_date %}
+                                    {% set days_overdue = (moment().date() - payment.due_date).days %}
+                                    <span class="badge bg-danger">{{ days_overdue }} dias</span>
+                                {% else %}
+                                    <span class="text-muted">N/A</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <span class="badge bg-danger">Vencido</span>
+                            </td>
+                            <td class="text-center">
+                                <div class="btn-group btn-group-sm" role="group">
+                                    <a href="{{ url_for('payments.view', id=payment.id) }}" class="btn btn-outline-primary" title="Ver detalhes">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                    <a href="{{ url_for('payments.edit', id=payment.id) }}" class="btn btn-outline-warning" title="Editar">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="text-center py-5">
+                <i class="fas fa-check-circle fa-3x text-success mb-3"></i>
+                <h5 class="text-success">Excelente!</h5>
+                <p class="text-muted">Não há pagamentos vencidos no momento. Todos os pagamentos estão em dia.</p>
+                <a href="{{ url_for('payments.index') }}" class="btn btn-primary">
+                    <i class="fas fa-list"></i> Ver Todos os Pagamentos
+                </a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

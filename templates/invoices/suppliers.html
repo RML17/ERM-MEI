@@ -1,0 +1,321 @@
+{% extends "base.html" %}
+
+{% block title %}Fornecedores - Sistema de Gestão{% endblock %}
+
+{% block content %}
+<div class="d-sm-flex align-items-center justify-content-between mb-4">
+    <h1 class="h3 mb-0 text-light">
+        <i class="fas fa-truck me-2"></i>Gerenciamento de Fornecedores
+    </h1>
+    <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#createSupplierModal">
+        <i class="fas fa-plus fa-sm text-white-50 me-1"></i> Novo Fornecedor
+    </button>
+</div>
+
+<!-- Modal para criar fornecedor -->
+<div class="modal fade" id="createSupplierModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Novo Fornecedor</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form method="POST" action="{{ url_for('invoices.suppliers') }}">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="name" class="form-label">Razão Social</label>
+                        <input type="text" class="form-control" id="name" name="name" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="cnpj" class="form-label">CNPJ</label>
+                        <input type="text" class="form-control" id="cnpj" name="cnpj" required placeholder="00.000.000/0000-00">
+                    </div>
+                    <div class="mb-3">
+                        <label for="state_registration" class="form-label">Inscrição Estadual</label>
+                        <input type="text" class="form-control" id="state_registration" name="state_registration">
+                    </div>
+                    <div class="mb-3">
+                        <label for="address" class="form-label">Endereço</label>
+                        <input type="text" class="form-control" id="address" name="address">
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="city" class="form-label">Cidade</label>
+                            <input type="text" class="form-control" id="city" name="city">
+                        </div>
+                        <div class="col-md-3">
+                            <label for="state" class="form-label">Estado</label>
+                            <input type="text" class="form-control" id="state" name="state" maxlength="2">
+                        </div>
+                        <div class="col-md-3">
+                            <label for="zip_code" class="form-label">CEP</label>
+                            <input type="text" class="form-control" id="zip_code" name="zip_code">
+                        </div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="phone" class="form-label">Telefone</label>
+                            <input type="text" class="form-control" id="phone" name="phone">
+                        </div>
+                        <div class="col-md-6">
+                            <label for="email" class="form-label">E-mail</label>
+                            <input type="email" class="form-control" id="email" name="email">
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="contact_name" class="form-label">Nome do Contato</label>
+                        <input type="text" class="form-control" id="contact_name" name="contact_name">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Cadastrar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Lista de fornecedores -->
+<div class="card shadow mb-4">
+    <div class="card-header py-3">
+        <h6 class="m-0 font-weight-bold text-primary">Fornecedores Cadastrados</h6>
+    </div>
+    <div class="card-body">
+        {% if suppliers %}
+        <div class="table-responsive">
+            <table class="table table-bordered table-hover" id="suppliersTable">
+                <thead>
+                    <tr>
+                        <th>Razão Social</th>
+                        <th>CNPJ</th>
+                        <th>Cidade/UF</th>
+                        <th>Contato</th>
+                        <th>Telefone</th>
+                        <th>E-mail</th>
+                        <th>Ações</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for supplier in suppliers %}
+                    <tr>
+                        <td>{{ supplier.name }}</td>
+                        <td>{{ supplier.cnpj }}</td>
+                        <td>
+                            {% if supplier.city and supplier.state %}
+                            {{ supplier.city }}/{{ supplier.state }}
+                            {% else %}
+                            -
+                            {% endif %}
+                        </td>
+                        <td>{{ supplier.contact_name or '-' }}</td>
+                        <td>{{ supplier.phone or '-' }}</td>
+                        <td>{{ supplier.email or '-' }}</td>
+                        <td>
+                            <div class="btn-group">
+                                <button class="btn btn-sm btn-info" data-bs-toggle="modal" data-bs-target="#viewSupplierModal{{ supplier.id }}">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                                <button class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#editSupplierModal{{ supplier.id }}">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <button class="btn btn-sm btn-danger" data-bs-toggle="modal" data-bs-target="#deleteSupplierModal{{ supplier.id }}">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                            
+                            <!-- Modal para visualizar -->
+                            <div class="modal fade" id="viewSupplierModal{{ supplier.id }}" tabindex="-1" aria-hidden="true">
+                                <div class="modal-dialog">
+                                    <div class="modal-content">
+                                        <div class="modal-header">
+                                            <h5 class="modal-title">Detalhes do Fornecedor</h5>
+                                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                        </div>
+                                        <div class="modal-body">
+                                            <dl class="row">
+                                                <dt class="col-sm-4">Razão Social:</dt>
+                                                <dd class="col-sm-8">{{ supplier.name }}</dd>
+                                                
+                                                <dt class="col-sm-4">CNPJ:</dt>
+                                                <dd class="col-sm-8">{{ supplier.cnpj }}</dd>
+                                                
+                                                <dt class="col-sm-4">Inscrição Estadual:</dt>
+                                                <dd class="col-sm-8">{{ supplier.state_registration or 'Não informado' }}</dd>
+                                                
+                                                <dt class="col-sm-4">Endereço:</dt>
+                                                <dd class="col-sm-8">{{ supplier.address or 'Não informado' }}</dd>
+                                                
+                                                <dt class="col-sm-4">Cidade/UF:</dt>
+                                                <dd class="col-sm-8">
+                                                    {% if supplier.city and supplier.state %}
+                                                    {{ supplier.city }}/{{ supplier.state }}
+                                                    {% else %}
+                                                    Não informado
+                                                    {% endif %}
+                                                </dd>
+                                                
+                                                <dt class="col-sm-4">CEP:</dt>
+                                                <dd class="col-sm-8">{{ supplier.zip_code or 'Não informado' }}</dd>
+                                                
+                                                <dt class="col-sm-4">Telefone:</dt>
+                                                <dd class="col-sm-8">{{ supplier.phone or 'Não informado' }}</dd>
+                                                
+                                                <dt class="col-sm-4">E-mail:</dt>
+                                                <dd class="col-sm-8">{{ supplier.email or 'Não informado' }}</dd>
+                                                
+                                                <dt class="col-sm-4">Contato:</dt>
+                                                <dd class="col-sm-8">{{ supplier.contact_name or 'Não informado' }}</dd>
+                                                
+                                                <dt class="col-sm-4">Cadastrado em:</dt>
+                                                <dd class="col-sm-8">{{ supplier.created_at.strftime('%d/%m/%Y %H:%M') }}</dd>
+                                                
+                                                <dt class="col-sm-4">Atualizado em:</dt>
+                                                <dd class="col-sm-8">{{ supplier.updated_at.strftime('%d/%m/%Y %H:%M') }}</dd>
+                                            </dl>
+                                        </div>
+                                        <div class="modal-footer">
+                                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="text-center py-4">
+            <i class="fas fa-truck fa-5x mb-3 text-muted"></i>
+            <p class="lead text-muted">Nenhum fornecedor cadastrado.</p>
+            <button class="btn btn-primary mt-2" data-bs-toggle="modal" data-bs-target="#createSupplierModal">
+                <i class="fas fa-plus me-1"></i> Adicionar Primeiro Fornecedor
+            </button>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Estatísticas de fornecedores -->
+<div class="row">
+    <div class="col-lg-6">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">Fornecedores por Estado</h6>
+            </div>
+            <div class="card-body">
+                <div class="chart-pie pt-4 pb-2">
+                    <canvas id="fornecedoresEstadoChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-6">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">Notas de Entrada por Fornecedor</h6>
+            </div>
+            <div class="card-body">
+                <div class="chart-bar">
+                    <canvas id="notasFornecedorChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    $(document).ready(function() {
+        // Inicializa o DataTable
+        $('#suppliersTable').DataTable({
+            "language": {
+                "url": "//cdn.datatables.net/plug-ins/1.10.25/i18n/Portuguese-Brasil.json"
+            }
+        });
+        
+        // Gráfico de fornecedores por estado
+        var estadoContext = document.getElementById("fornecedoresEstadoChart");
+        if (estadoContext && {{ suppliers|length }}) {
+            var estadoChart = new Chart(estadoContext, {
+                type: 'pie',
+                data: {
+                    labels: ["SP", "RJ", "MG", "PR", "RS", "Outros"],
+                    datasets: [{
+                        data: [
+                            {{ suppliers|selectattr('state', 'equalto', 'SP')|list|length }},
+                            {{ suppliers|selectattr('state', 'equalto', 'RJ')|list|length }},
+                            {{ suppliers|selectattr('state', 'equalto', 'MG')|list|length }},
+                            {{ suppliers|selectattr('state', 'equalto', 'PR')|list|length }},
+                            {{ suppliers|selectattr('state', 'equalto', 'RS')|list|length }},
+                            {{ suppliers|rejectattr('state', 'in', ['SP', 'RJ', 'MG', 'PR', 'RS'])|list|length }}
+                        ],
+                        backgroundColor: ['#4e73df', '#1cc88a', '#36b9cc', '#f6c23e', '#e74a3b', '#858796'],
+                        hoverBackgroundColor: ['#2e59d9', '#17a673', '#2c9faf', '#dda20a', '#be2617', '#60616f'],
+                    }]
+                },
+                options: {
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                        }
+                    }
+                }
+            });
+        }
+        
+        // Gráfico de notas por fornecedor (exemplo simulado)
+        var notasContext = document.getElementById("notasFornecedorChart");
+        if (notasContext && {{ suppliers|length }}) {
+            // Esta parte seria alimentada com dados reais em produção
+            // Aqui estamos simulando para a vizualização
+            var topFornecedores = [];
+            var notasCounts = [];
+            
+            {% for supplier in suppliers %}
+            {% if loop.index <= 5 %}
+            topFornecedores.push("{{ supplier.name|truncate(15, True) }}");
+            notasCounts.push({{ range(1, 20)|random }});
+            {% endif %}
+            {% endfor %}
+            
+            var notasChart = new Chart(notasContext, {
+                type: 'bar',
+                data: {
+                    labels: topFornecedores,
+                    datasets: [{
+                        label: "Notas Fiscais",
+                        backgroundColor: "#36b9cc",
+                        hoverBackgroundColor: "#2c9faf",
+                        data: notasCounts
+                    }]
+                },
+                options: {
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                precision: 0
+                            }
+                        }
+                    }
+                }
+            });
+        }
+    });
+    
+    // Máscara para CNPJ (poderia ser implementada com uma biblioteca como jquery.mask)
+    $(document).ready(function() {
+        $('#cnpj').on('input', function() {
+            // Implementação de máscara para CNPJ
+        });
+    });
+</script>
+{% endblock %}

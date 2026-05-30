@@ -1,0 +1,386 @@
+{% extends "base.html" %}
+
+{% block title %}Resumos Financeiros - Sistema de Gestão Financeira{% endblock %}
+
+{% block content %}
+<div class="d-sm-flex align-items-center justify-content-between mb-4">
+    <h1 class="h3 mb-0 text-light">Resumos Financeiros</h1>
+    <div>
+        <a href="{{ url_for('reports.report_generator') }}" class="btn btn-primary btn-sm">
+            <i class="fas fa-file-export me-1"></i>Gerar Relatório Completo
+        </a>
+    </div>
+</div>
+
+<!-- Filter Card -->
+<div class="card shadow mb-4">
+    <div class="card-header py-3">
+        <h6 class="m-0 font-weight-bold text-primary">Período de Análise</h6>
+    </div>
+    <div class="card-body">
+        <form method="GET" action="{{ url_for('reports.summary') }}">
+            <div class="row">
+                <div class="col-md-4 mb-3">
+                    <label class="form-label">Período</label>
+                    <select name="period" class="form-select">
+                        <option value="month" {% if period == 'month' %}selected{% endif %}>Mês Atual</option>
+                        <option value="quarter" {% if period == 'quarter' %}selected{% endif %}>Trimestre Atual</option>
+                        <option value="year" {% if period == 'year' %}selected{% endif %}>Ano Atual</option>
+                        <option value="custom" {% if period == 'custom' %}selected{% endif %}>Período Personalizado</option>
+                    </select>
+                </div>
+                <div class="col-md-4 mb-3" id="startDateContainer" {% if period != 'custom' %}style="display: none;"{% endif %}>
+                    <label class="form-label">Data Inicial</label>
+                    <input type="date" name="start_date" class="form-control" value="{{ start_date.strftime('%Y-%m-%d') if start_date }}">
+                </div>
+                <div class="col-md-4 mb-3" id="endDateContainer" {% if period != 'custom' %}style="display: none;"{% endif %}>
+                    <label class="form-label">Data Final</label>
+                    <input type="date" name="end_date" class="form-control" value="{{ end_date.strftime('%Y-%m-%d') if end_date }}">
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-12 text-end">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-search me-1"></i>Atualizar Resumo
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Summary Content -->
+<div class="row">
+    <!-- Financial Summary Card -->
+    <div class="col-lg-6 mb-4">
+        <div class="card shadow h-100">
+            <div class="card-header py-3 d-flex justify-content-between align-items-center">
+                <h6 class="m-0 font-weight-bold text-primary">Resumo Financeiro</h6>
+                <span class="badge bg-info">{{ start_date.strftime('%d/%m/%Y') }} a {{ end_date.strftime('%d/%m/%Y') }}</span>
+            </div>
+            <div class="card-body">
+                <div class="row mb-4">
+                    <div class="col-md-6">
+                        <div class="card bg-success bg-opacity-25 h-100">
+                            <div class="card-body">
+                                <div class="text-xs font-weight-bold text-success text-uppercase mb-1">Receitas</div>
+                                <div class="h4 mb-0 font-weight-bold text-light">R$ {{ "%.2f"|format(summary.total_income)|replace('.', ',') }}</div>
+                                <div class="mt-2 text-xs text-muted">{{ summary.invoice_count_out }} Notas de Saída</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card bg-danger bg-opacity-25 h-100">
+                            <div class="card-body">
+                                <div class="text-xs font-weight-bold text-danger text-uppercase mb-1">Despesas</div>
+                                <div class="h4 mb-0 font-weight-bold text-light">R$ {{ "%.2f"|format(summary.total_expense)|replace('.', ',') }}</div>
+                                <div class="mt-2 text-xs text-muted">{{ summary.invoice_count_in }} Notas de Entrada</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="row mb-4">
+                    <div class="col-12">
+                        <div class="card {{ 'bg-success bg-opacity-25' if summary.balance >= 0 else 'bg-danger bg-opacity-25' }} h-100">
+                            <div class="card-body">
+                                <div class="text-xs font-weight-bold {{ 'text-success' if summary.balance >= 0 else 'text-danger' }} text-uppercase mb-1">Balanço do Período</div>
+                                <div class="h3 mb-0 font-weight-bold text-light">R$ {{ "%.2f"|format(summary.balance)|replace('.', ',') }}</div>
+                                <div class="mt-2 text-xs text-light">
+                                    {% if summary.balance >= 0 %}
+                                    <i class="fas fa-arrow-up me-1 text-success"></i>Resultado Positivo
+                                    {% else %}
+                                    <i class="fas fa-arrow-down me-1 text-danger"></i>Resultado Negativo
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="card bg-warning bg-opacity-25 h-100">
+                            <div class="card-body">
+                                <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">Impostos</div>
+                                <div class="h4 mb-0 font-weight-bold text-light">R$ {{ "%.2f"|format(summary.total_tax)|replace('.', ',') }}</div>
+                                <div class="mt-2 text-xs text-muted">{{ "%.1f"|format(summary.tax_percentage) }}% do faturamento</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card bg-info bg-opacity-25 h-100">
+                            <div class="card-body">
+                                <div class="text-xs font-weight-bold text-info text-uppercase mb-1">Margem</div>
+                                <div class="h4 mb-0 font-weight-bold text-light">{{ "%.1f"|format(summary.margin) }}%</div>
+                                <div class="mt-2 text-xs text-muted">Margem de Lucro do Período</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Charts Card -->
+    <div class="col-lg-6 mb-4">
+        <div class="card shadow h-100">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">Visualização Gráfica</h6>
+            </div>
+            <div class="card-body">
+                <h5 class="text-center mb-3">Distribuição por Tipo de Nota</h5>
+                <div class="chart-pie mb-4">
+                    <canvas id="invoiceTypeChart"></canvas>
+                </div>
+                
+                <h5 class="text-center mb-3">Receitas x Despesas</h5>
+                <div class="chart-bar">
+                    <canvas id="incomeExpenseChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Payment Status Card -->
+<div class="card shadow mb-4">
+    <div class="card-header py-3">
+        <h6 class="m-0 font-weight-bold text-primary">Status de Pagamentos</h6>
+    </div>
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-3 mb-4">
+                <div class="card bg-success bg-gradient h-100">
+                    <div class="card-body text-center">
+                        <i class="fas fa-check-circle fa-2x text-white mb-2"></i>
+                        <h5 class="text-white">Pagos</h5>
+                        <h3 class="text-white mb-0">R$ {{ "%.2f"|format(payment_summary.paid)|replace('.', ',') }}</h3>
+                        <small class="text-white">{{ payment_summary.paid_count }} pagamentos</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3 mb-4">
+                <div class="card bg-warning bg-gradient h-100">
+                    <div class="card-body text-center">
+                        <i class="fas fa-clock fa-2x text-white mb-2"></i>
+                        <h5 class="text-white">Pendentes</h5>
+                        <h3 class="text-white mb-0">R$ {{ "%.2f"|format(payment_summary.pending)|replace('.', ',') }}</h3>
+                        <small class="text-white">{{ payment_summary.pending_count }} pagamentos</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3 mb-4">
+                <div class="card bg-danger bg-gradient h-100">
+                    <div class="card-body text-center">
+                        <i class="fas fa-exclamation-triangle fa-2x text-white mb-2"></i>
+                        <h5 class="text-white">Vencidos</h5>
+                        <h3 class="text-white mb-0">R$ {{ "%.2f"|format(payment_summary.overdue)|replace('.', ',') }}</h3>
+                        <small class="text-white">{{ payment_summary.overdue_count }} pagamentos</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3 mb-4">
+                <div class="card bg-secondary bg-gradient h-100">
+                    <div class="card-body text-center">
+                        <i class="fas fa-ban fa-2x text-white mb-2"></i>
+                        <h5 class="text-white">Cancelados</h5>
+                        <h3 class="text-white mb-0">R$ {{ "%.2f"|format(payment_summary.cancelled)|replace('.', ',') }}</h3>
+                        <small class="text-white">{{ payment_summary.cancelled_count }} pagamentos</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Top Customers and Products -->
+<div class="row">
+    <!-- Top Customers -->
+    <div class="col-lg-6 mb-4">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">Principais Clientes</h6>
+            </div>
+            <div class="card-body">
+                {% if top_customers %}
+                <div class="table-responsive">
+                    <table class="table table-bordered table-hover">
+                        <thead>
+                            <tr>
+                                <th>Cliente</th>
+                                <th>Valor Total</th>
+                                <th>Qtd. Notas</th>
+                                <th>% do Total</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for customer in top_customers %}
+                            <tr>
+                                <td>{{ customer.name }}</td>
+                                <td>R$ {{ "%.2f"|format(customer.total)|replace('.', ',') }}</td>
+                                <td>{{ customer.count }}</td>
+                                <td>{{ "%.1f"|format(customer.percentage) }}%</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="text-center py-3">
+                    <p class="text-muted mb-0">Nenhum cliente com notas fiscais no período.</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <!-- Top Products -->
+    <div class="col-lg-6 mb-4">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">Produtos Mais Vendidos</h6>
+            </div>
+            <div class="card-body">
+                {% if top_products %}
+                <div class="table-responsive">
+                    <table class="table table-bordered table-hover">
+                        <thead>
+                            <tr>
+                                <th>Produto</th>
+                                <th>Quantidade</th>
+                                <th>Valor Total</th>
+                                <th>% do Total</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for product in top_products %}
+                            <tr>
+                                <td>{{ product.name }}</td>
+                                <td>{{ "%.2f"|format(product.quantity)|replace('.', ',') }}</td>
+                                <td>R$ {{ "%.2f"|format(product.total)|replace('.', ',') }}</td>
+                                <td>{{ "%.1f"|format(product.percentage) }}%</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="text-center py-3">
+                    <p class="text-muted mb-0">Nenhum produto vendido no período.</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Controle dos campos de data personalizada
+        const periodSelect = document.querySelector('select[name="period"]');
+        const startDateContainer = document.getElementById('startDateContainer');
+        const endDateContainer = document.getElementById('endDateContainer');
+        
+        periodSelect.addEventListener('change', function() {
+            if (this.value === 'custom') {
+                startDateContainer.style.display = 'block';
+                endDateContainer.style.display = 'block';
+            } else {
+                startDateContainer.style.display = 'none';
+                endDateContainer.style.display = 'none';
+            }
+        });
+        
+        // Chart.js - Gráfico de Tipos de Nota
+        const invoiceTypeCtx = document.getElementById('invoiceTypeChart').getContext('2d');
+        const invoiceTypeChart = new Chart(invoiceTypeCtx, {
+            type: 'pie',
+            data: {
+                labels: ['Notas de Entrada', 'Notas de Saída'],
+                datasets: [{
+                    data: [{{ summary.invoice_count_in }}, {{ summary.invoice_count_out }}],
+                    backgroundColor: ['#e74a3b', '#4e73df'],
+                    hoverBackgroundColor: ['#be3c2f', '#2e59d9'],
+                    hoverBorderColor: "rgba(234, 236, 244, 1)",
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: {
+                            color: '#858796'
+                        }
+                    },
+                    tooltip: {
+                        backgroundColor: "rgb(39, 44, 50)",
+                        bodyFont: {
+                            family: "'Nunito', 'Segoe UI', 'Roboto', 'Arial', sans-serif",
+                            size: 14
+                        },
+                        titleFont: {
+                            family: "'Nunito', 'Segoe UI', 'Roboto', 'Arial', sans-serif",
+                            size: 14
+                        }
+                    }
+                }
+            }
+        });
+        
+        // Chart.js - Gráfico de Receitas x Despesas
+        const incomeExpenseCtx = document.getElementById('incomeExpenseChart').getContext('2d');
+        const incomeExpenseChart = new Chart(incomeExpenseCtx, {
+            type: 'bar',
+            data: {
+                labels: ['Receitas', 'Despesas'],
+                datasets: [{
+                    label: 'Valor (R$)',
+                    data: [{{ summary.total_income }}, {{ summary.total_expense }}],
+                    backgroundColor: ['#1cc88a', '#e74a3b'],
+                    borderColor: ['#169e6f', '#be3c2f'],
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            callback: function(value) {
+                                return 'R$ ' + value.toLocaleString('pt-BR');
+                            }
+                        }
+                    }
+                },
+                plugins: {
+                    legend: {
+                        display: false
+                    },
+                    tooltip: {
+                        backgroundColor: "rgb(39, 44, 50)",
+                        callbacks: {
+                            label: function(context) {
+                                let label = context.dataset.label || '';
+                                if (label) {
+                                    label += ': ';
+                                }
+                                if (context.parsed.y !== null) {
+                                    label += 'R$ ' + context.parsed.y.toLocaleString('pt-BR', {minimumFractionDigits: 2});
+                                }
+                                return label;
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    });
+</script>
+{% endblock %}

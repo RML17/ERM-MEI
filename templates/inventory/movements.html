@@ -1,0 +1,277 @@
+{% extends "base.html" %}
+
+{% block title %}Movimentações de Estoque - Sistema de Gestão Financeira{% endblock %}
+
+{% block content %}
+<div class="d-sm-flex align-items-center justify-content-between mb-4">
+    <h1 class="h3 mb-0 text-light">Movimentações de Estoque</h1>
+    <div>
+        <a href="{{ url_for('inventory.products') }}" class="btn btn-info btn-sm me-2">
+            <i class="fas fa-box me-1"></i>Produtos
+        </a>
+        <a href="{{ url_for('inventory.create_movement') }}" class="btn btn-primary btn-sm">
+            <i class="fas fa-plus me-1"></i>Nova Movimentação
+        </a>
+    </div>
+</div>
+
+<!-- Filter Card -->
+<div class="card shadow mb-4">
+    <div class="card-header py-3">
+        <h6 class="m-0 font-weight-bold text-primary">Filtrar Movimentações</h6>
+    </div>
+    <div class="card-body">
+        <form method="GET" action="{{ url_for('inventory.movements') }}">
+            <div class="row">
+                <div class="col-md-3 mb-3">
+                    <label class="form-label">Produto</label>
+                    <select name="product_id" class="form-select">
+                        <option value="">Todos os Produtos</option>
+                        {% for product in products %}
+                        <option value="{{ product.id }}" {% if filters.product_id == product.id %}selected{% endif %}>
+                            {{ product.sku }} - {{ product.name }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-3 mb-3">
+                    <label class="form-label">Tipo de Movimento</label>
+                    <select name="movement_type" class="form-select">
+                        <option value="">Todos</option>
+                        <option value="entrada" {% if filters.movement_type == 'entrada' %}selected{% endif %}>Entrada</option>
+                        <option value="saída" {% if filters.movement_type == 'saída' %}selected{% endif %}>Saída</option>
+                    </select>
+                </div>
+                <div class="col-md-3 mb-3">
+                    <label class="form-label">Data Inicial</label>
+                    <input type="date" name="start_date" class="form-control" value="{{ filters.start_date.strftime('%Y-%m-%d') if filters.start_date }}">
+                </div>
+                <div class="col-md-3 mb-3">
+                    <label class="form-label">Data Final</label>
+                    <input type="date" name="end_date" class="form-control" value="{{ filters.end_date.strftime('%Y-%m-%d') if filters.end_date }}">
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-12 text-end">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-search me-1"></i>Filtrar
+                    </button>
+                    <a href="{{ url_for('inventory.movements') }}" class="btn btn-secondary">
+                        <i class="fas fa-sync me-1"></i>Limpar Filtros
+                    </a>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Movements List Card -->
+<div class="card shadow mb-4">
+    <div class="card-header py-3 d-flex justify-content-between align-items-center">
+        <h6 class="m-0 font-weight-bold text-primary">Histórico de Movimentações</h6>
+        <span class="badge bg-info">{{ movements.total }} movimentações encontradas</span>
+    </div>
+    <div class="card-body">
+        {% if movements.items %}
+        <div class="table-responsive">
+            <table class="table table-bordered table-hover datatable">
+                <thead>
+                    <tr>
+                        <th>Data</th>
+                        <th>Produto</th>
+                        <th>Tipo</th>
+                        <th>Quantidade</th>
+                        <th>Custo Unitário</th>
+                        <th>Valor Total</th>
+                        <th>Nota Fiscal</th>
+                        <th>Observações</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for movement in movements.items %}
+                    <tr class="{% if movement.movement_type == 'entrada' %}table-success{% else %}table-danger{% endif %}">
+                        <td>{{ movement.movement_date.strftime('%d/%m/%Y %H:%M') }}</td>
+                        <td>
+                            <a href="{{ url_for('inventory.view_product', id=movement.product_id) }}">
+                                {{ movement.product.sku }} - {{ movement.product.name }}
+                            </a>
+                        </td>
+                        <td>
+                            <span class="badge {% if movement.movement_type == 'entrada' %}bg-success{% else %}bg-danger{% endif %}">
+                                {{ movement.movement_type|capitalize }}
+                            </span>
+                        </td>
+                        <td>{{ "%.3f"|format(movement.quantity|float)|replace('.', ',') }}</td>
+                        <td>R$ {{ "%.2f"|format(movement.unit_cost|float)|replace('.', ',') }}</td>
+                        <td>R$ {{ "%.2f"|format(movement.quantity|float * movement.unit_cost|float)|replace('.', ',') }}</td>
+                        <td>
+                            {% if movement.invoice_item and movement.invoice_item.invoice %}
+                            <a href="{{ url_for('invoices.view', id=movement.invoice_item.invoice.id) }}">
+                                {{ movement.invoice_item.invoice.invoice_number }}
+                            </a>
+                            {% else %}
+                            -
+                            {% endif %}
+                        </td>
+                        <td>{{ movement.notes or '-' }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        
+        <!-- Pagination -->
+        <nav aria-label="Paginação de movimentações">
+            <ul class="pagination justify-content-center mt-4">
+                {% if movements.has_prev %}
+                <li class="page-item">
+                    <a class="page-link" href="{{ url_for('inventory.movements', page=movements.prev_num, **request.args) }}" tabindex="-1">Anterior</a>
+                </li>
+                {% else %}
+                <li class="page-item disabled">
+                    <a class="page-link" href="#" tabindex="-1">Anterior</a>
+                </li>
+                {% endif %}
+                
+                {% for page_num in movements.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2) %}
+                    {% if page_num %}
+                        {% if page_num == movements.page %}
+                        <li class="page-item active">
+                            <a class="page-link" href="#">{{ page_num }}</a>
+                        </li>
+                        {% else %}
+                        <li class="page-item">
+                            <a class="page-link" href="{{ url_for('inventory.movements', page=page_num, **request.args) }}">{{ page_num }}</a>
+                        </li>
+                        {% endif %}
+                    {% else %}
+                    <li class="page-item disabled">
+                        <a class="page-link" href="#">...</a>
+                    </li>
+                    {% endif %}
+                {% endfor %}
+                
+                {% if movements.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="{{ url_for('inventory.movements', page=movements.next_num, **request.args) }}">Próximo</a>
+                </li>
+                {% else %}
+                <li class="page-item disabled">
+                    <a class="page-link" href="#">Próximo</a>
+                </li>
+                {% endif %}
+            </ul>
+        </nav>
+        {% else %}
+        <div class="text-center py-4">
+            <i class="fas fa-exchange-alt fa-4x text-muted mb-3"></i>
+            <p class="lead">Nenhuma movimentação encontrada.</p>
+            <a href="{{ url_for('inventory.create_movement') }}" class="btn btn-primary">
+                <i class="fas fa-plus me-1"></i>Registrar Movimentação
+            </a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Movement Summary Card -->
+<div class="row">
+    <!-- Entries Summary -->
+    <div class="col-md-6 mb-4">
+        <div class="card shadow h-100 bg-success bg-opacity-10">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-success">Resumo de Entradas</h6>
+            </div>
+            <div class="card-body">
+                {% 
+                    set entries_total = namespace(count=0, quantity=0, value=0) 
+                %}
+                {% for movement in movements.items if movement.movement_type == 'entrada' %}
+                    {% 
+                        set entries_total.count = entries_total.count + 1 
+                    %}
+                    {% 
+                        set entries_total.quantity = entries_total.quantity + movement.quantity|float 
+                    %}
+                    {% 
+                        set entries_total.value = entries_total.value + (movement.quantity|float * movement.unit_cost|float) 
+                    %}
+                {% endfor %}
+                
+                <div class="row">
+                    <div class="col-md-4 text-center mb-3">
+                        <div class="h5 mb-0 font-weight-bold text-success">{{ entries_total.count }}</div>
+                        <div class="small text-white">Movimentações</div>
+                    </div>
+                    <div class="col-md-4 text-center mb-3">
+                        <div class="h5 mb-0 font-weight-bold text-success">{{ "%.3f"|format(entries_total.quantity)|replace('.', ',') }}</div>
+                        <div class="small text-white">Quantidade Total</div>
+                    </div>
+                    <div class="col-md-4 text-center mb-3">
+                        <div class="h5 mb-0 font-weight-bold text-success">R$ {{ "%.2f"|format(entries_total.value)|replace('.', ',') }}</div>
+                        <div class="small text-white">Valor Total</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Outputs Summary -->
+    <div class="col-md-6 mb-4">
+        <div class="card shadow h-100 bg-danger bg-opacity-10">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-danger">Resumo de Saídas</h6>
+            </div>
+            <div class="card-body">
+                {% 
+                    set outputs_total = namespace(count=0, quantity=0, value=0) 
+                %}
+                {% for movement in movements.items if movement.movement_type == 'saída' %}
+                    {% 
+                        set outputs_total.count = outputs_total.count + 1 
+                    %}
+                    {% 
+                        set outputs_total.quantity = outputs_total.quantity + movement.quantity|float 
+                    %}
+                    {% 
+                        set outputs_total.value = outputs_total.value + (movement.quantity|float * movement.unit_cost|float) 
+                    %}
+                {% endfor %}
+                
+                <div class="row">
+                    <div class="col-md-4 text-center mb-3">
+                        <div class="h5 mb-0 font-weight-bold text-danger">{{ outputs_total.count }}</div>
+                        <div class="small text-white">Movimentações</div>
+                    </div>
+                    <div class="col-md-4 text-center mb-3">
+                        <div class="h5 mb-0 font-weight-bold text-danger">{{ "%.3f"|format(outputs_total.quantity)|replace('.', ',') }}</div>
+                        <div class="small text-white">Quantidade Total</div>
+                    </div>
+                    <div class="col-md-4 text-center mb-3">
+                        <div class="h5 mb-0 font-weight-bold text-danger">R$ {{ "%.2f"|format(outputs_total.value)|replace('.', ',') }}</div>
+                        <div class="small text-white">Valor Total</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialize DataTable
+        const table = document.querySelector('.datatable');
+        if (table) {
+            new DataTable(table, {
+                order: [[0, 'desc']], // Order by date (first column), newest first
+                pageLength: 25,
+                language: {
+                    url: '//cdn.datatables.net/plug-ins/1.13.4/i18n/pt-BR.json'
+                }
+            });
+        }
+    });
+</script>
+{% endblock %}

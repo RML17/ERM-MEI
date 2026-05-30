@@ -1,0 +1,255 @@
+{% extends "base.html" %}
+
+{% block title %}{{ product.name }} - Detalhes do Produto{% endblock %}
+
+{% block content %}
+<div class="d-sm-flex align-items-center justify-content-between mb-4">
+    <h1 class="h3 mb-0 text-light">Detalhes do Produto</h1>
+    <div>
+        <a href="{{ url_for('inventory.create_movement') }}?product_id={{ product.id }}&movement_type=entrada" class="btn btn-success btn-sm me-2">
+            <i class="fas fa-plus-circle me-1"></i>Adicionar Estoque
+        </a>
+        <a href="{{ url_for('inventory.create_movement') }}?product_id={{ product.id }}&movement_type=saída" class="btn btn-warning btn-sm me-2">
+            <i class="fas fa-minus-circle me-1"></i>Retirar Estoque
+        </a>
+        <a href="{{ url_for('inventory.edit_product', id=product.id) }}" class="btn btn-primary btn-sm">
+            <i class="fas fa-edit me-1"></i>Editar Produto
+        </a>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Product Information Card -->
+    <div class="col-lg-6 mb-4">
+        <div class="card shadow">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">Informações do Produto</h6>
+            </div>
+            <div class="card-body">
+                <table class="table table-bordered">
+                    <tbody>
+                        <tr>
+                            <th style="width:35%">SKU</th>
+                            <td>{{ product.sku }}</td>
+                        </tr>
+                        <tr>
+                            <th>Nome</th>
+                            <td>{{ product.name }}</td>
+                        </tr>
+                        <tr>
+                            <th>Preço de Compra</th>
+                            <td>R$ {{ "%.2f"|format(product.purchase_price|float)|replace('.', ',') }}</td>
+                        </tr>
+                        <tr>
+                            <th>Preço de Venda</th>
+                            <td>R$ {{ "%.2f"|format(product.sale_price|float)|replace('.', ',') }}</td>
+                        </tr>
+                        <tr>
+                            <th>Estoque Atual</th>
+                            <td class="{% if current_stock is not none and current_stock <= product.min_stock %}text-danger fw-bold{% endif %}">
+                                {{ current_stock if current_stock is not none else 0 }}
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>Estoque Mínimo</th>
+                            <td>{{ product.min_stock }}</td>
+                        </tr>
+                        <tr>
+                            <th>NCM</th>
+                            <td>{{ product.ncm or 'Não informado' }}</td>
+                        </tr>
+                        <tr>
+                            <th>Peso (kg)</th>
+                            <td>{{ product.weight or 'Não informado' }}</td>
+                        </tr>
+                        <tr>
+                            <th>Criado em</th>
+                            <td>{{ product.created_at.strftime('%d/%m/%Y %H:%M') }}</td>
+                        </tr>
+                        <tr>
+                            <th>Última Atualização</th>
+                            <td>{{ product.updated_at.strftime('%d/%m/%Y %H:%M') }}</td>
+                        </tr>
+                    </tbody>
+                </table>
+                <div class="mt-3">
+                    <h6 class="font-weight-bold">Descrição</h6>
+                    <p class="mb-0">{{ product.description or 'Nenhuma descrição cadastrada.' }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Stock Status Card -->
+    <div class="col-lg-6 mb-4">
+        <div class="card shadow h-100">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">Status do Estoque FIFO</h6>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6 mb-4">
+                        <div class="card bg-primary bg-opacity-25 h-100">
+                            <div class="card-body">
+                                <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">Estoque Atual</div>
+                                <div class="h1 mb-0 font-weight-bold text-light">{{ current_stock if current_stock is not none else 0 }}</div>
+                                <div class="mt-2 text-xs text-light">
+                                    {% if current_stock is none or current_stock <= product.min_stock %}
+                                    <span class="text-danger">
+                                        <i class="fas fa-exclamation-triangle me-1"></i>Abaixo do Mínimo
+                                    </span>
+                                    {% else %}
+                                    <span class="text-success">
+                                        <i class="fas fa-check-circle me-1"></i>Estoque Adequado
+                                    </span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6 mb-4">
+                        <div class="card bg-success bg-opacity-25 h-100">
+                            <div class="card-body">
+                                <div class="text-xs font-weight-bold text-success text-uppercase mb-1">Faixa de Estoque</div>
+                                <div class="h4 mb-0 font-weight-bold text-light">
+                                    {% if current_stock is none %}
+                                    <span class="text-danger">Sem Estoque</span>
+                                    {% elif current_stock <= product.min_stock * 0.5 %}
+                                    <span class="text-danger">Crítico</span>
+                                    {% elif current_stock <= product.min_stock %}
+                                    <span class="text-warning">Baixo</span>
+                                    {% elif current_stock <= product.min_stock * 2 %}
+                                    <span class="text-info">Normal</span>
+                                    {% else %}
+                                    <span class="text-success">Ótimo</span>
+                                    {% endif %}
+                                </div>
+                                <div class="progress mt-3 bg-dark">
+                                    {% set percentage = ((current_stock if current_stock is not none else 0) / (product.min_stock * 2) * 100)|round|int if product.min_stock > 0 else 0 %}
+                                    {% set percentage = [percentage, 100]|min %}
+                                    {% set bar_class = 
+                                        "bg-danger" if percentage < 25 else 
+                                        "bg-warning" if percentage < 50 else 
+                                        "bg-info" if percentage < 75 else 
+                                        "bg-success" 
+                                    %}
+                                    <div class="progress-bar {{ bar_class }}" role="progressbar" style="width: {{ percentage }}%" aria-valuenow="{{ percentage }}" aria-valuemin="0" aria-valuemax="100">{{ percentage }}%</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- FIFO Stock Entries -->
+                <h6 class="mt-2 font-weight-bold">Lotes em Estoque (FIFO)</h6>
+                {% if entries %}
+                <div class="table-responsive">
+                    <table class="table table-sm table-bordered table-hover">
+                        <thead>
+                            <tr>
+                                <th>Data de Entrada</th>
+                                <th>Custo Unitário</th>
+                                <th>Quantidade Original</th>
+                                <th>Quantidade Restante</th>
+                                <th>Valor Total</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% set total_value = 0 %}
+                            {% for entry in entries %}
+                                {% set entry_value = entry.remaining_quantity|float * entry.unit_cost|float %}
+                                {% set total_value = total_value + entry_value %}
+                                <tr>
+                                    <td>{{ entry.entry_date.strftime('%d/%m/%Y') }}</td>
+                                    <td>R$ {{ "%.2f"|format(entry.unit_cost|float)|replace('.', ',') }}</td>
+                                    <td>{{ "%.3f"|format(entry.quantity|float)|replace('.', ',') }}</td>
+                                    <td>{{ "%.3f"|format(entry.remaining_quantity|float)|replace('.', ',') }}</td>
+                                    <td>R$ {{ "%.2f"|format(entry_value)|replace('.', ',') }}</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                        <tfoot>
+                            <tr class="table-primary">
+                                <th colspan="4" class="text-end">Valor Total em Estoque:</th>
+                                <th>R$ {{ "%.2f"|format(total_value)|replace('.', ',') }}</th>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+                {% else %}
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle me-1"></i>Não há lotes em estoque deste produto.
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Stock Movement History Card -->
+<div class="card shadow mb-4">
+    <div class="card-header py-3 d-flex justify-content-between align-items-center">
+        <h6 class="m-0 font-weight-bold text-primary">Histórico de Movimentações</h6>
+        <a href="{{ url_for('inventory.movements', product_id=product.id) }}" class="btn btn-sm btn-info">
+            <i class="fas fa-search me-1"></i>Ver Todas
+        </a>
+    </div>
+    <div class="card-body">
+        {% if movements %}
+        <div class="table-responsive">
+            <table class="table table-sm table-bordered table-hover datatable">
+                <thead>
+                    <tr>
+                        <th>Data</th>
+                        <th>Tipo</th>
+                        <th>Quantidade</th>
+                        <th>Valor Unitário</th>
+                        <th>Valor Total</th>
+                        <th>Observações</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for movement in movements %}
+                    <tr class="{% if movement.movement_type == 'entrada' %}table-success{% else %}table-danger{% endif %}">
+                        <td>{{ movement.movement_date.strftime('%d/%m/%Y %H:%M') }}</td>
+                        <td>
+                            <span class="badge {% if movement.movement_type == 'entrada' %}bg-success{% else %}bg-danger{% endif %}">
+                                {{ movement.movement_type|capitalize }}
+                            </span>
+                        </td>
+                        <td>{{ "%.3f"|format(movement.quantity|float)|replace('.', ',') }}</td>
+                        <td>R$ {{ "%.2f"|format(movement.unit_cost|float)|replace('.', ',') }}</td>
+                        <td>R$ {{ "%.2f"|format(movement.quantity|float * movement.unit_cost|float)|replace('.', ',') }}</td>
+                        <td>{{ movement.notes or '-' }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="alert alert-info">
+            <i class="fas fa-info-circle me-1"></i>Não há movimentações registradas para este produto.
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialize DataTable for movement history
+        const movementTable = document.querySelector('.datatable');
+        if (movementTable) {
+            new DataTable(movementTable, {
+                order: [[0, 'desc']],  // Order by date, most recent first
+                pageLength: 10,
+                language: {
+                    url: '//cdn.datatables.net/plug-ins/1.13.4/i18n/pt-BR.json'
+                }
+            });
+        }
+    });
+</script>
+{% endblock %}

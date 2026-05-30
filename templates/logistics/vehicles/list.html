@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+
+{% block title %}Veículos - Sistema de Gestão Empresarial{% endblock %}
+
+{% block content %}
+<div class="d-sm-flex align-items-center justify-content-between mb-4">
+    <h1 class="h3 mb-0 text-light">
+        <i class="fas fa-truck me-2"></i>Frota Própria
+    </h1>
+    <a href="{{ url_for('logistics.create_vehicle') }}" class="btn btn-primary btn-sm">
+        <i class="fas fa-plus fa-sm text-white-50 me-1"></i> Novo Veículo
+    </a>
+</div>
+
+<div class="card shadow mb-4">
+    <div class="card-header py-3">
+        <h6 class="m-0 font-weight-bold text-primary">Lista de Veículos</h6>
+    </div>
+    <div class="card-body">
+        {% if vehicles %}
+            <div class="table-responsive">
+                <table class="table table-striped" id="veiculosTable">
+                    <thead>
+                        <tr>
+                            <th>Placa</th>
+                            <th>Tipo</th>
+                            <th>Marca/Modelo</th>
+                            <th>Ano</th>
+                            <th>Capacidade</th>
+                            <th>Consumo</th>
+                            <th>Status</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for vehicle in vehicles %}
+                        <tr>
+                            <td><strong>{{ vehicle.plate }}</strong></td>
+                            <td>
+                                <span class="badge bg-info">{{ vehicle.vehicle_type.value }}</span>
+                            </td>
+                            <td>
+                                {{ vehicle.brand or '-' }} {{ vehicle.model or '' }}
+                                {% if vehicle.color %}<br><small class="text-muted">{{ vehicle.color }}</small>{% endif %}
+                            </td>
+                            <td>{{ vehicle.year or '-' }}</td>
+                            <td>
+                                {% if vehicle.max_weight %}{{ vehicle.max_weight }} kg{% endif %}
+                                {% if vehicle.max_volume %}<br>{{ vehicle.max_volume }} m³{% endif %}
+                            </td>
+                            <td>{{ vehicle.fuel_consumption or '-' }} km/l</td>
+                            <td>
+                                {% if vehicle.is_active %}
+                                    <span class="badge bg-success">Ativo</span>
+                                {% else %}
+                                    <span class="badge bg-danger">Inativo</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <a href="#" class="btn btn-outline-primary btn-sm" title="Editar">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <div class="text-center py-5">
+                <i class="fas fa-truck fa-3x text-gray-300 mb-3"></i>
+                <h5 class="text-muted">Nenhum veículo cadastrado</h5>
+                <p class="text-muted">Gerencie sua frota própria</p>
+                <a href="{{ url_for('logistics.create_vehicle') }}" class="btn btn-primary">
+                    <i class="fas fa-plus me-1"></i> Cadastrar Veículo
+                </a>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

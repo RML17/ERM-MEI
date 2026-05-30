@@ -1,0 +1,330 @@
+{% extends "base.html" %}
+
+{% block title %}{{ title }} - Sistema de Gestão Empresarial{% endblock %}
+
+{% block content %}
+<div class="d-sm-flex align-items-center justify-content-between mb-4">
+    <h1 class="h3 mb-0 text-light">
+        <i class="fas fa-box me-2"></i>{{ title }}
+    </h1>
+    <a href="{{ url_for('logistics.shipments') }}" class="btn btn-secondary btn-sm">
+        <i class="fas fa-arrow-left fa-sm text-white-50 me-1"></i> Voltar
+    </a>
+</div>
+
+<div class="row">
+    <div class="col-lg-12">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">Dados do Envio</h6>
+            </div>
+            <div class="card-body">
+                <form method="POST" id="shipmentForm">
+                    {{ form.hidden_tag() }}
+                    
+                    <!-- Vinculação com Nota Fiscal e Transportadora -->
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                {{ form.invoice_id.label(class="form-label") }}
+                                {{ form.invoice_id(class="form-select") }}
+                                <div class="form-text">Opcional - Vincular a uma nota fiscal</div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                {{ form.shipping_company_id.label(class="form-label") }}
+                                {{ form.shipping_company_id(class="form-select") }}
+                                {% if form.shipping_company_id.errors %}
+                                    <div class="text-danger">{{ form.shipping_company_id.errors[0] }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        {{ form.route_id.label(class="form-label") }}
+                        {{ form.route_id(class="form-select") }}
+                        <div class="form-text">Opcional - Para cálculo automático de frete</div>
+                    </div>
+
+                    <!-- Dados do Remetente -->
+                    <h6 class="text-primary mb-3 mt-4">
+                        <i class="fas fa-user me-2"></i>Dados do Remetente
+                    </h6>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                {{ form.sender_name.label(class="form-label") }}
+                                {{ form.sender_name(class="form-control") }}
+                                {% if form.sender_name.errors %}
+                                    <div class="text-danger">{{ form.sender_name.errors[0] }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                {{ form.sender_phone.label(class="form-label") }}
+                                {{ form.sender_phone(class="form-control") }}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        {{ form.sender_address.label(class="form-label") }}
+                        {{ form.sender_address(class="form-control") }}
+                        {% if form.sender_address.errors %}
+                            <div class="text-danger">{{ form.sender_address.errors[0] }}</div>
+                        {% endif %}
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                {{ form.sender_city.label(class="form-label") }}
+                                {{ form.sender_city(class="form-control") }}
+                                {% if form.sender_city.errors %}
+                                    <div class="text-danger">{{ form.sender_city.errors[0] }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                {{ form.sender_state.label(class="form-label") }}
+                                {{ form.sender_state(class="form-control") }}
+                                {% if form.sender_state.errors %}
+                                    <div class="text-danger">{{ form.sender_state.errors[0] }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                {{ form.sender_zip.label(class="form-label") }}
+                                {{ form.sender_zip(class="form-control") }}
+                                {% if form.sender_zip.errors %}
+                                    <div class="text-danger">{{ form.sender_zip.errors[0] }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Dados do Destinatário -->
+                    <h6 class="text-primary mb-3 mt-4">
+                        <i class="fas fa-map-marker-alt me-2"></i>Dados do Destinatário
+                    </h6>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                {{ form.recipient_name.label(class="form-label") }}
+                                {{ form.recipient_name(class="form-control") }}
+                                {% if form.recipient_name.errors %}
+                                    <div class="text-danger">{{ form.recipient_name.errors[0] }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                {{ form.recipient_phone.label(class="form-label") }}
+                                {{ form.recipient_phone(class="form-control") }}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        {{ form.recipient_email.label(class="form-label") }}
+                        {{ form.recipient_email(class="form-control") }}
+                        <div class="form-text">Para envio de notificações de rastreamento</div>
+                    </div>
+
+                    <div class="mb-3">
+                        {{ form.recipient_address.label(class="form-label") }}
+                        {{ form.recipient_address(class="form-control") }}
+                        {% if form.recipient_address.errors %}
+                            <div class="text-danger">{{ form.recipient_address.errors[0] }}</div>
+                        {% endif %}
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                {{ form.recipient_city.label(class="form-label") }}
+                                {{ form.recipient_city(class="form-control") }}
+                                {% if form.recipient_city.errors %}
+                                    <div class="text-danger">{{ form.recipient_city.errors[0] }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                {{ form.recipient_state.label(class="form-label") }}
+                                {{ form.recipient_state(class="form-control") }}
+                                {% if form.recipient_state.errors %}
+                                    <div class="text-danger">{{ form.recipient_state.errors[0] }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                {{ form.recipient_zip.label(class="form-label") }}
+                                {{ form.recipient_zip(class="form-control") }}
+                                {% if form.recipient_zip.errors %}
+                                    <div class="text-danger">{{ form.recipient_zip.errors[0] }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Informações da Carga -->
+                    <h6 class="text-primary mb-3 mt-4">
+                        <i class="fas fa-weight-hanging me-2"></i>Informações da Carga
+                    </h6>
+                    <div class="row">
+                        <div class="col-md-3">
+                            <div class="mb-3">
+                                {{ form.total_weight.label(class="form-label") }}
+                                {{ form.total_weight(class="form-control") }}
+                                {% if form.total_weight.errors %}
+                                    <div class="text-danger">{{ form.total_weight.errors[0] }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="mb-3">
+                                {{ form.total_volume.label(class="form-label") }}
+                                {{ form.total_volume(class="form-control") }}
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="mb-3">
+                                {{ form.declared_value.label(class="form-label") }}
+                                {{ form.declared_value(class="form-control") }}
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="mb-3">
+                                {{ form.package_count.label(class="form-label") }}
+                                {{ form.package_count(class="form-control") }}
+                                {% if form.package_count.errors %}
+                                    <div class="text-danger">{{ form.package_count.errors[0] }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Instruções e Observações -->
+                    <h6 class="text-primary mb-3 mt-4">
+                        <i class="fas fa-clipboard me-2"></i>Instruções e Observações
+                    </h6>
+                    <div class="mb-3">
+                        {{ form.delivery_instructions.label(class="form-label") }}
+                        {{ form.delivery_instructions(class="form-control", rows="3") }}
+                        <div class="form-text">Instruções especiais para entrega</div>
+                    </div>
+
+                    <div class="mb-3">
+                        {{ form.notes.label(class="form-label") }}
+                        {{ form.notes(class="form-control", rows="3") }}
+                    </div>
+
+                    <!-- Botões -->
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                        <a href="{{ url_for('logistics.shipments') }}" class="btn btn-secondary me-md-2">Cancelar</a>
+                        <button type="button" class="btn btn-info me-md-2" id="calculateFreight">
+                            <i class="fas fa-calculator me-1"></i> Calcular Frete
+                        </button>
+                        {{ form.submit(class="btn btn-primary") }}
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para Cálculo de Frete -->
+<div class="modal fade" id="freightModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Cálculo de Frete</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="freightResult">
+                <div class="text-center">
+                    <div class="spinner-border" role="status">
+                        <span class="visually-hidden">Calculando...</span>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+$(document).ready(function() {
+    // Calcular frete
+    $('#calculateFreight').click(function() {
+        const shippingCompanyId = $('#shipping_company_id').val();
+        const routeId = $('#route_id').val();
+        const weight = $('#total_weight').val();
+        
+        if (!shippingCompanyId || !routeId || !weight) {
+            alert('Por favor, preencha a transportadora, rota e peso para calcular o frete.');
+            return;
+        }
+        
+        $('#freightModal').modal('show');
+        
+        $.ajax({
+            url: '{{ url_for("logistics.api_calculate_freight") }}',
+            method: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify({
+                shipping_company_id: parseInt(shippingCompanyId),
+                route_id: parseInt(routeId),
+                weight: parseFloat(weight)
+            }),
+            success: function(data) {
+                $('#freightResult').html(`
+                    <div class="row">
+                        <div class="col-6"><strong>Custo Base:</strong></div>
+                        <div class="col-6">R$ ${data.base_cost.toFixed(2)}</div>
+                    </div>
+                    <div class="row">
+                        <div class="col-6"><strong>Custo por Peso:</strong></div>
+                        <div class="col-6">R$ ${data.weight_cost.toFixed(2)}</div>
+                    </div>
+                    <div class="row">
+                        <div class="col-6"><strong>Custo por Distância:</strong></div>
+                        <div class="col-6">R$ ${data.distance_cost.toFixed(2)}</div>
+                    </div>
+                    <hr>
+                    <div class="row">
+                        <div class="col-6"><strong>Frete Total:</strong></div>
+                        <div class="col-6"><h5 class="text-primary">R$ ${data.freight_cost.toFixed(2)}</h5></div>
+                    </div>
+                    <div class="mt-3">
+                        <small class="text-muted">
+                            <strong>Distância:</strong> ${data.details.route_distance} km<br>
+                            <strong>Tempo estimado:</strong> ${data.details.estimated_time}h<br>
+                            <strong>Prazo:</strong> ${data.details.delivery_time_min}-${data.details.delivery_time_max} dias úteis
+                        </small>
+                    </div>
+                `);
+            },
+            error: function(xhr) {
+                $('#freightResult').html(`
+                    <div class="alert alert-danger">
+                        Erro ao calcular frete: ${xhr.responseJSON?.error || 'Erro desconhecido'}
+                    </div>
+                `);
+            }
+        });
+    });
+});
+</script>
+{% endblock %}

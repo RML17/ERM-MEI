@@ -1,0 +1,237 @@
+{% extends "base.html" %}
+
+{% block title %}Departamentos - Recursos Humanos{% endblock %}
+
+{% block content %}
+<div class="d-sm-flex align-items-center justify-content-between mb-4">
+    <h1 class="h3 mb-0 text-light">
+        <i class="fas fa-building me-2"></i>Gerenciamento de Departamentos
+    </h1>
+    <a href="#" class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#createDepartmentModal">
+        <i class="fas fa-plus fa-sm text-white-50 me-1"></i> Novo Departamento
+    </a>
+</div>
+
+<!-- Modal para criar departamento -->
+<div class="modal fade" id="createDepartmentModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Novo Departamento</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form method="POST" action="{{ url_for('hr.departments') }}">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="name" class="form-label">Nome do Departamento</label>
+                        <input type="text" class="form-control" id="name" name="name" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="description" class="form-label">Descrição</label>
+                        <textarea class="form-control" id="description" name="description" rows="3"></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label for="manager_id" class="form-label">Gerente</label>
+                        <select class="form-select" id="manager_id" name="manager_id">
+                            <option value="">-- Selecione um gerente --</option>
+                            {% for employee in employees %}
+                            <option value="{{ employee.id }}">{{ employee.first_name }} {{ employee.last_name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="budget" class="form-label">Orçamento Anual (R$)</label>
+                        <input type="number" class="form-control" id="budget" name="budget" step="0.01">
+                    </div>
+                    <div class="mb-3">
+                        <label for="cost_center" class="form-label">Centro de Custo</label>
+                        <input type="text" class="form-control" id="cost_center" name="cost_center">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Criar Departamento</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Departamentos cadastrados -->
+<div class="card shadow mb-4">
+    <div class="card-header py-3">
+        <h6 class="m-0 font-weight-bold text-primary">Departamentos</h6>
+    </div>
+    <div class="card-body">
+        {% if departments %}
+        <div class="table-responsive">
+            <table class="table table-bordered table-hover" id="departmentsTable">
+                <thead>
+                    <tr>
+                        <th>Nome</th>
+                        <th>Gerente</th>
+                        <th>Funcionários</th>
+                        <th>Orçamento</th>
+                        <th>Centro de Custo</th>
+                        <th>Ações</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for dept in departments %}
+                    <tr>
+                        <td>{{ dept.name }}</td>
+                        <td>
+                            {% if dept.manager %}
+                            {{ dept.manager.first_name }} {{ dept.manager.last_name }}
+                            {% else %}
+                            -
+                            {% endif %}
+                        </td>
+                        <td>{{ dept.employees|length }}</td>
+                        <td>{{ "R$ %.2f"|format(dept.budget|float) if dept.budget else '-' }}</td>
+                        <td>{{ dept.cost_center or '-' }}</td>
+                        <td>
+                            <div class="btn-group">
+                                <a href="#" class="btn btn-sm btn-info">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                                <a href="#" class="btn btn-sm btn-primary">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                                <a href="#" class="btn btn-sm btn-danger">
+                                    <i class="fas fa-trash"></i>
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="text-center py-4">
+            <i class="fas fa-building fa-5x mb-3 text-muted"></i>
+            <p class="lead text-muted">Nenhum departamento cadastrado.</p>
+            <button class="btn btn-primary mt-2" data-bs-toggle="modal" data-bs-target="#createDepartmentModal">
+                <i class="fas fa-plus me-1"></i> Adicionar Primeiro Departamento
+            </button>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Indicadores de Departamentos -->
+<div class="row">
+    <div class="col-lg-6">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">Distribuição de Funcionários</h6>
+            </div>
+            <div class="card-body">
+                <div class="chart-pie pt-4 pb-2">
+                    <canvas id="employeesDistributionChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-6">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">Alocação de Orçamento</h6>
+            </div>
+            <div class="card-body">
+                <div class="chart-bar">
+                    <canvas id="budgetAllocationChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    $(document).ready(function() {
+        // Inicializa o DataTable
+        $('#departmentsTable').DataTable({
+            "paging": false,
+            "searching": false,
+            "info": false,
+            "language": {
+                "url": "//cdn.datatables.net/plug-ins/1.10.25/i18n/Portuguese-Brasil.json"
+            }
+        });
+        
+        // Gráfico de distribuição de funcionários (simulado)
+        var deptLabels = [];
+        var deptData = [];
+        var deptColors = ['#4e73df', '#1cc88a', '#36b9cc', '#f6c23e', '#e74a3b', '#858796'];
+        
+        {% for dept in departments %}
+        deptLabels.push("{{ dept.name }}");
+        deptData.push({{ dept.employees|length }});
+        {% endfor %}
+        
+        var distributionCtx = document.getElementById("employeesDistributionChart");
+        if (distributionCtx && deptLabels.length > 0) {
+            var distributionChart = new Chart(distributionCtx, {
+                type: 'pie',
+                data: {
+                    labels: deptLabels,
+                    datasets: [{
+                        data: deptData,
+                        backgroundColor: deptColors,
+                        hoverBackgroundColor: deptColors,
+                    }]
+                },
+                options: {
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'right'
+                        }
+                    }
+                }
+            });
+        }
+        
+        // Gráfico de alocação de orçamento (simulado)
+        var budgetData = [];
+        
+        {% for dept in departments %}
+        budgetData.push({{ dept.budget|float if dept.budget else 0 }});
+        {% endfor %}
+        
+        var budgetCtx = document.getElementById("budgetAllocationChart");
+        if (budgetCtx && deptLabels.length > 0) {
+            var budgetChart = new Chart(budgetCtx, {
+                type: 'bar',
+                data: {
+                    labels: deptLabels,
+                    datasets: [{
+                        label: "Orçamento (R$)",
+                        backgroundColor: "#36b9cc",
+                        hoverBackgroundColor: "#2c9faf",
+                        data: budgetData
+                    }]
+                },
+                options: {
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                callback: function(value) {
+                                    return 'R$ ' + value.toLocaleString('pt-BR');
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+    });
+</script>
+{% endblock %}

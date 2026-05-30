@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+
+{% block title %}Login - Sistema de Gestão Financeira{% endblock %}
+
+{% block auth_content %}
+<div class="row justify-content-center">
+    <div class="col-md-6 col-lg-4">
+        <div class="card shadow-sm auth-form">
+            <div class="card-body">
+                <div class="auth-logo text-center mb-4">
+                    <i class="fas fa-money-bill-wave fa-3x text-primary"></i>
+                    <h4 class="mt-2">Sistema de Gestão Financeira</h4>
+                </div>
+                
+                <h5 class="card-title text-center mb-4">Login</h5>
+                
+                <div class="alert alert-info mb-3" role="alert">
+                    <p class="mb-0"><strong>Credenciais de acesso padrão:</strong></p>
+                    <ul class="mb-0">
+                        <li><strong>Usuário:</strong> admin</li>
+                        <li><strong>Senha:</strong> admin123</li>
+                    </ul>
+                    <p class="mb-0 mt-2"><small><em>Recomendamos alterar a senha após o primeiro acesso.</em></small></p>
+                </div>
+                
+                <form method="POST" action="{{ url_for('auth.login') }}">
+                    {{ form.hidden_tag() }}
+                    
+                    <div class="mb-3">
+                        <label for="{{ form.username.id }}" class="form-label">Nome de Usuário</label>
+                        {{ form.username(class="form-control" + (" is-invalid" if form.username.errors else ""), placeholder="Digite seu nome de usuário") }}
+                        {% if form.username.errors %}
+                            <div class="invalid-feedback">
+                                {% for error in form.username.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="{{ form.password.id }}" class="form-label">Senha</label>
+                        {{ form.password(class="form-control" + (" is-invalid" if form.password.errors else ""), placeholder="Digite sua senha") }}
+                        {% if form.password.errors %}
+                            <div class="invalid-feedback">
+                                {% for error in form.password.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="mb-3 form-check">
+                        {{ form.remember(class="form-check-input") }}
+                        <label class="form-check-label" for="{{ form.remember.id }}">Lembrar-me</label>
+                    </div>
+                    
+                    <div class="d-grid gap-2">
+                        {{ form.submit(class="btn btn-primary") }}
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

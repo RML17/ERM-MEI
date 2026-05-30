@@ -1,0 +1,383 @@
+{% extends "base.html" %}
+
+{% block title %}Recursos Humanos - Dashboard{% endblock %}
+
+{% block content %}
+<div class="d-sm-flex align-items-center justify-content-between mb-4">
+    <h1 class="h3 mb-0 text-light">
+        <i class="fas fa-users me-2"></i>Recursos Humanos
+    </h1>
+</div>
+
+<!-- Cards de resumo -->
+<div class="row">
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-primary shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                            Total de Funcionários
+                        </div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{ total_employees }}</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-users fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-success shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                            Departamentos
+                        </div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{ total_departments }}</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-building fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-warning shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+                            Férias Pendentes
+                        </div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{ pending_leaves }}</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-calendar-times fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-info shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
+                            Folha de Pagamento
+                        </div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">Ativa</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-money-check-alt fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Seção principal -->
+<div class="row">
+    <!-- Menu de ações rápidas -->
+    <div class="col-lg-8">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">
+                    <i class="fas fa-tachometer-alt me-2"></i>Ações Rápidas
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <a href="{{ url_for('hr.employees') }}" class="btn btn-primary btn-block d-block text-center">
+                            <i class="fas fa-users me-2"></i>Gerenciar Funcionários
+                        </a>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <a href="{{ url_for('hr.payroll') }}" class="btn btn-success btn-block d-block text-center">
+                            <i class="fas fa-money-check-alt me-2"></i>Folha de Pagamento
+                        </a>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <a href="{{ url_for('hr.attendance') }}" class="btn btn-info btn-block d-block text-center">
+                            <i class="fas fa-clock me-2"></i>Ponto Eletrônico
+                        </a>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <a href="{{ url_for('hr.leaves') }}" class="btn btn-warning btn-block d-block text-center">
+                            <i class="fas fa-calendar-alt me-2"></i>Férias e Licenças
+                        </a>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <a href="{{ url_for('hr.performance') }}" class="btn btn-secondary btn-block d-block text-center">
+                            <i class="fas fa-chart-line me-2"></i>Avaliações
+                        </a>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <a href="{{ url_for('hr.reports') }}" class="btn btn-dark btn-block d-block text-center">
+                            <i class="fas fa-file-alt me-2"></i>Relatórios
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Distribuição por departamento -->
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">
+                    <i class="fas fa-chart-pie me-2"></i>Funcionários por Departamento
+                </h6>
+            </div>
+            <div class="card-body">
+                {% if dept_stats %}
+                <div class="row">
+                    {% for dept_name, count in dept_stats %}
+                    <div class="col-md-6 mb-3">
+                        <div class="card border-left-primary">
+                            <div class="card-body py-2">
+                                <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                                    {{ dept_name or 'Sem Departamento' }}
+                                </div>
+                                <div class="h6 mb-0 font-weight-bold text-gray-800">
+                                    {{ count }} funcionário{{ 's' if count != 1 else '' }}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="text-center text-muted">
+                    <i class="fas fa-users fa-3x mb-3"></i>
+                    <p>Nenhum departamento cadastrado ainda.</p>
+                    <a href="{{ url_for('hr.departments') }}" class="btn btn-primary">
+                        <i class="fas fa-plus me-1"></i> Criar Primeiro Departamento
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Painel lateral -->
+    <div class="col-lg-4">
+        <!-- Aniversariantes do mês -->
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-success">
+                    <i class="fas fa-birthday-cake me-2"></i>Aniversariantes do Mês
+                </h6>
+            </div>
+            <div class="card-body">
+                {% if birthdays %}
+                    {% for employee in birthdays %}
+                    <div class="d-flex align-items-center mb-3">
+                        <div class="mr-3">
+                            <div class="icon-circle bg-success">
+                                <i class="fas fa-gift text-white"></i>
+                            </div>
+                        </div>
+                        <div>
+                            <div class="font-weight-bold">{{ employee.full_name }}</div>
+                            <div class="text-muted small">
+                                {% if employee.birth_date %}
+                                {{ employee.birth_date.strftime('%d/%m') }}
+                                {% endif %}
+                                {% if employee.department %}
+                                - {{ employee.department.name }}
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                <div class="text-center text-muted">
+                    <i class="fas fa-birthday-cake fa-2x mb-2"></i>
+                    <p class="mb-0">Nenhum aniversário este mês! 🎂</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Admissões recentes -->
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-info">
+                    <i class="fas fa-user-plus me-2"></i>Admissões Recentes
+                </h6>
+            </div>
+            <div class="card-body">
+                {% if recent_hires %}
+                    {% for employee in recent_hires %}
+                    <div class="d-flex align-items-center mb-3">
+                        <div class="mr-3">
+                            <div class="icon-circle bg-info">
+                                <i class="fas fa-user text-white"></i>
+                            </div>
+                        </div>
+                        <div>
+                            <div class="font-weight-bold">{{ employee.full_name }}</div>
+                            <div class="text-muted small">
+                                Admitido em {{ employee.hire_date.strftime('%d/%m/%Y') }}
+                                {% if employee.position %}
+                                - {{ employee.position.title }}
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                <div class="text-center text-muted">
+                    <i class="fas fa-user-plus fa-2x mb-2"></i>
+                    <p class="mb-0">Nenhuma admissão recente</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Calculadora rápida de salário -->
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-warning">
+                    <i class="fas fa-calculator me-2"></i>Calculadora Rápida
+                </h6>
+            </div>
+            <div class="card-body">
+                <form id="quickSalaryCalc">
+                    <div class="mb-3">
+                        <label class="form-label">Salário Bruto (R$)</label>
+                        <input type="number" class="form-control" id="grossSalary" step="0.01" placeholder="5000.00">
+                    </div>
+                    
+                    <button type="button" class="btn btn-warning btn-sm" onclick="calculateQuickSalary()">
+                        <i class="fas fa-calculator me-1"></i> Calcular
+                    </button>
+                </form>
+                
+                <div id="quickResult" class="mt-3" style="display: none;">
+                    <div class="border-top pt-3">
+                        <div class="row">
+                            <div class="col-6"><small>INSS:</small></div>
+                            <div class="col-6 text-right"><small id="inssValue">-</small></div>
+                        </div>
+                        <div class="row">
+                            <div class="col-6"><small>IRRF:</small></div>
+                            <div class="col-6 text-right"><small id="irrfValue">-</small></div>
+                        </div>
+                        <div class="row border-top pt-2">
+                            <div class="col-6"><strong>Líquido:</strong></div>
+                            <div class="col-6 text-right"><strong id="netValue">-</strong></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Estatísticas adicionais -->
+<div class="row">
+    <div class="col-12">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">
+                    <i class="fas fa-chart-bar me-2"></i>Visão Geral do RH
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="row text-center">
+                    <div class="col-md-3">
+                        <div class="border-right">
+                            <h5 class="text-primary">{{ total_employees }}</h5>
+                            <small class="text-muted">Funcionários Ativos</small>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="border-right">
+                            <h5 class="text-success">{{ total_departments }}</h5>
+                            <small class="text-muted">Departamentos</small>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="border-right">
+                            <h5 class="text-warning">{{ pending_leaves }}</h5>
+                            <small class="text-muted">Solicitações Pendentes</small>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <h5 class="text-info">100%</h5>
+                        <small class="text-muted">Sistema Operacional</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function calculateQuickSalary() {
+    const grossSalary = parseFloat($('#grossSalary').val());
+    
+    if (!grossSalary || grossSalary <= 0) {
+        alert('Por favor, insira um salário válido.');
+        return;
+    }
+    
+    // Cálculo simplificado do INSS (2024)
+    let inss = 0;
+    if (grossSalary <= 1302.00) {
+        inss = grossSalary * 0.075;
+    } else if (grossSalary <= 2571.29) {
+        inss = grossSalary * 0.09;
+    } else if (grossSalary <= 3856.94) {
+        inss = grossSalary * 0.12;
+    } else if (grossSalary <= 7507.49) {
+        inss = grossSalary * 0.14;
+    } else {
+        inss = 876.97; // Teto do INSS
+    }
+    
+    // Cálculo simplificado do IRRF
+    const taxableIncome = grossSalary - inss;
+    let irrf = 0;
+    
+    if (taxableIncome > 1903.98 && taxableIncome <= 2826.65) {
+        irrf = (taxableIncome * 0.075) - 142.80;
+    } else if (taxableIncome > 2826.65 && taxableIncome <= 3751.05) {
+        irrf = (taxableIncome * 0.15) - 354.80;
+    } else if (taxableIncome > 3751.05 && taxableIncome <= 4664.68) {
+        irrf = (taxableIncome * 0.225) - 636.13;
+    } else if (taxableIncome > 4664.68) {
+        irrf = (taxableIncome * 0.275) - 869.36;
+    }
+    
+    irrf = Math.max(irrf, 0);
+    
+    const netSalary = grossSalary - inss - irrf;
+    
+    // Exibir resultados
+    $('#inssValue').text('R$ ' + inss.toFixed(2));
+    $('#irrfValue').text('R$ ' + irrf.toFixed(2));
+    $('#netValue').text('R$ ' + netSalary.toFixed(2));
+    $('#quickResult').show();
+}
+
+// Enter para calcular
+$('#grossSalary').on('keypress', function(e) {
+    if (e.which === 13) {
+        calculateQuickSalary();
+    }
+});
+</script>
+{% endblock %}

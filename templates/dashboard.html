@@ -1,0 +1,405 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - Sistema de Gestão Financeira{% endblock %}
+
+{% block content %}
+<div class="d-sm-flex align-items-center justify-content-between mb-4">
+    <h1 class="h3 mb-0 text-light">Dashboard</h1>
+    <a href="{{ url_for('reports.index') }}" class="d-none d-sm-inline-block btn btn-sm btn-primary shadow-sm">
+        <i class="fas fa-download fa-sm text-white-50 me-1"></i> Gerar Relatório
+    </a>
+</div>
+
+<!-- Principal KPIs Row -->
+<div class="row">
+    <!-- Total de Vendas -->
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card bg-primary bg-opacity-25 shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col me-2">
+                        <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">Total de Vendas</div>
+                        <div class="h5 mb-0 font-weight-bold text-light">
+                            R$ {{ kpi_data.total_sales|round(2, 'floor')|string|replace('.', ',') }}
+                        </div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-dollar-sign fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Margem de Lucro -->
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card bg-success bg-opacity-25 shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col me-2">
+                        <div class="text-xs font-weight-bold text-success text-uppercase mb-1">Margem de Lucro</div>
+                        <div class="h5 mb-0 font-weight-bold text-light">
+                            {{ kpi_data.profit_margin|round(2)|string|replace('.', ',') }}%
+                        </div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-chart-line fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Pagamentos Pendentes -->
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card bg-warning bg-opacity-25 shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col me-2">
+                        <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">Pagamentos Pendentes</div>
+                        <div class="h5 mb-0 font-weight-bold text-light">
+                            R$ {{ kpi_data.total_pending_payments|round(2)|string|replace('.', ',') }}
+                        </div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-money-bill-alt fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Produtos com Estoque Baixo -->
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card bg-danger bg-opacity-25 shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col me-2">
+                        <div class="text-xs font-weight-bold text-danger text-uppercase mb-1">Estoque Baixo</div>
+                        <div class="h5 mb-0 font-weight-bold text-light">{{ low_stock_products|length }}</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-boxes fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Secondary KPIs Row -->
+<div class="row">
+    <!-- Mês Atual: Receitas -->
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card bg-info bg-opacity-25 shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col me-2">
+                        <div class="text-xs font-weight-bold text-info text-uppercase mb-1">Receitas (Mês Atual)</div>
+                        <div class="h5 mb-0 font-weight-bold text-light">
+                            R$ {{ kpi_data.current_month_revenue|round(2)|string|replace('.', ',') }}
+                        </div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-arrow-up fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Mês Atual: Despesas -->
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card bg-secondary bg-opacity-25 shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col me-2">
+                        <div class="text-xs font-weight-bold text-secondary text-uppercase mb-1">Despesas (Mês Atual)</div>
+                        <div class="h5 mb-0 font-weight-bold text-light">
+                            R$ {{ kpi_data.current_month_expenses|round(2)|string|replace('.', ',') }}
+                        </div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-arrow-down fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Pagamentos Vencidos -->
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card bg-danger bg-opacity-25 shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col me-2">
+                        <div class="text-xs font-weight-bold text-danger text-uppercase mb-1">Pagamentos Vencidos</div>
+                        <div class="h5 mb-0 font-weight-bold text-light">
+                            R$ {{ kpi_data.overdue_payments|round(2)|string|replace('.', ',') }}
+                        </div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-exclamation-triangle fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Pagamentos Próximos (7 dias) -->
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card bg-warning bg-opacity-25 shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col me-2">
+                        <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">Próximos 7 dias</div>
+                        <div class="h5 mb-0 font-weight-bold text-light">
+                            R$ {{ kpi_data.upcoming_payments|round(2)|string|replace('.', ',') }}
+                        </div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-calendar-alt fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Charts Row -->
+<div class="row">
+    <!-- Revenue vs Expenses Chart -->
+    <div class="col-lg-8 mb-4">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                <h6 class="m-0 font-weight-bold text-primary">Comparativo: Receitas vs Despesas</h6>
+            </div>
+            <div class="card-body">
+                <div class="chart-area">
+                    <canvas id="revenueExpenseChart" 
+                            data-labels="{{ months_labels|tojson }}" 
+                            data-income="{{ income_values|tojson }}"
+                            data-expense="{{ expense_values|tojson }}"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Invoice Status Chart -->
+    <div class="col-lg-4 mb-4">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                <h6 class="m-0 font-weight-bold text-primary">Status das Notas Fiscais</h6>
+            </div>
+            <div class="card-body">
+                <div id="invoiceStatusData" data-statuses="{{ invoice_by_status|tojson }}"></div>
+                <div class="chart-pie pt-4">
+                    <canvas id="invoiceStatusChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- More Charts Row -->
+<div class="row">
+    <!-- Top Products Chart -->
+    <div class="col-lg-6 mb-4">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                <h6 class="m-0 font-weight-bold text-primary">Produtos Mais Vendidos</h6>
+            </div>
+            <div class="card-body">
+                <div class="chart-bar">
+                    <canvas id="topProductsChart" 
+                            data-labels="{{ top_product_names|tojson }}" 
+                            data-quantities="{{ top_product_quantities|tojson }}"
+                            data-values="{{ top_product_values|tojson }}"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Low Stock Chart -->
+    <div class="col-lg-6 mb-4">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                <h6 class="m-0 font-weight-bold text-primary">Estoque Crítico</h6>
+            </div>
+            <div class="card-body">
+                <div id="lowStockData" data-products="{{ low_stock_products|tojson }}"></div>
+                <div class="chart-bar">
+                    <canvas id="inventoryChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Content Row -->
+<div class="row">
+    <!-- Recent Invoices -->
+    <div class="col-lg-6 mb-4">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">Notas Fiscais Recentes</h6>
+            </div>
+            <div class="card-body">
+                {% if recent_invoices %}
+                <div class="table-responsive">
+                    <table class="table table-bordered table-striped table-hover">
+                        <thead>
+                            <tr>
+                                <th>Número</th>
+                                <th>Tipo</th>
+                                <th>Data</th>
+                                <th>Valor</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for invoice in recent_invoices %}
+                            <tr>
+                                <td>
+                                    <a href="{{ url_for('invoices.view', id=invoice.id) }}">{{ invoice.invoice_number }}</a>
+                                </td>
+                                <td>{{ invoice.type.value }}</td>
+                                <td>{{ invoice.issue_date.strftime('%d/%m/%Y') }}</td>
+                                <td>R$ {{ invoice.total_value|string|replace('.', ',') }}</td>
+                                <td>
+                                    {% if invoice.status.value == 'Aprovada' %}
+                                    <span class="badge bg-success">{{ invoice.status.value }}</span>
+                                    {% elif invoice.status.value == 'Emitida' %}
+                                    <span class="badge bg-info">{{ invoice.status.value }}</span>
+                                    {% elif invoice.status.value == 'Pendente' %}
+                                    <span class="badge bg-warning">{{ invoice.status.value }}</span>
+                                    {% elif invoice.status.value == 'Cancelada' %}
+                                    <span class="badge bg-danger">{{ invoice.status.value }}</span>
+                                    {% else %}
+                                    <span class="badge bg-secondary">{{ invoice.status.value }}</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <p class="mb-0 text-center">Nenhuma nota fiscal recente encontrada.</p>
+                {% endif %}
+                <div class="text-center mt-3">
+                    <a href="{{ url_for('invoices.index') }}" class="btn btn-sm btn-primary">Ver Todas</a>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Pending Payments -->
+    <div class="col-lg-6 mb-4">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">Pagamentos Pendentes</h6>
+            </div>
+            <div class="card-body">
+                {% if pending_payments %}
+                <div class="table-responsive">
+                    <table class="table table-bordered table-striped table-hover">
+                        <thead>
+                            <tr>
+                                <th>Nota</th>
+                                <th>Vencimento</th>
+                                <th>Valor</th>
+                                <th>Método</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for payment in pending_payments %}
+                            <tr>
+                                <td>
+                                    {% if payment.invoice %}
+                                    <a href="{{ url_for('invoices.view', id=payment.invoice.id) }}">{{ payment.invoice.invoice_number }}</a>
+                                    {% else %}
+                                    -
+                                    {% endif %}
+                                </td>
+                                <td {% if payment.due_date < now.date() %}class="text-danger"{% endif %}>
+                                    {{ payment.due_date.strftime('%d/%m/%Y') }}
+                                </td>
+                                <td>R$ {{ payment.amount|string|replace('.', ',') }}</td>
+                                <td>{{ payment.payment_method.value }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <p class="mb-0 text-center">Nenhum pagamento pendente encontrado.</p>
+                {% endif %}
+                <div class="text-center mt-3">
+                    <a href="{{ url_for('payments.index') }}" class="btn btn-sm btn-primary">Ver Todos</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Low Stock Products -->
+<div class="row">
+    <div class="col-12 mb-4">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">Produtos com Estoque Baixo</h6>
+            </div>
+            <div class="card-body">
+                {% if low_stock_products %}
+                <div class="table-responsive">
+                    <table class="table table-bordered table-striped table-hover">
+                        <thead>
+                            <tr>
+                                <th>Produto</th>
+                                <th>Estoque Atual</th>
+                                <th>Mínimo</th>
+                                <th>Status</th>
+                                <th>Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in low_stock_products %}
+                            <tr>
+                                <td>
+                                    <a href="{{ url_for('inventory.view_product', id=item.id) }}">{{ item.name }}</a>
+                                </td>
+                                <td class="text-danger">{{ item.current_stock }}</td>
+                                <td>{{ item.min_stock }}</td>
+                                <td>
+                                    {% set percent = (item.current_stock / item.min_stock * 100)|round|int if item.min_stock > 0 else 0 %}
+                                    <div class="progress">
+                                        <div class="progress-bar bg-danger" role="progressbar" 
+                                            style="width: {{ percent }}%" 
+                                            aria-valuenow="{{ percent }}" 
+                                            aria-valuemin="0" 
+                                            aria-valuemax="100">{{ percent }}%</div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <a href="{{ url_for('inventory.create_movement') }}?product_id={{ item.product.id }}&movement_type=entrada" 
+                                       class="btn btn-sm btn-success">
+                                       <i class="fas fa-plus-circle"></i> Adicionar Estoque
+                                    </a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <p class="mb-0 text-center">Todos os produtos estão com estoque adequado.</p>
+                {% endif %}
+                <div class="text-center mt-3">
+                    <a href="{{ url_for('inventory.products') }}" class="btn btn-sm btn-primary">Ver Estoque</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

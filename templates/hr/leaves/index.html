@@ -1,0 +1,204 @@
+{% extends "base.html" %}
+
+{% block title %}Férias e Licenças - Recursos Humanos{% endblock %}
+
+{% block content %}
+<div class="d-sm-flex align-items-center justify-content-between mb-4">
+    <h1 class="h3 mb-0 text-light">
+        <i class="fas fa-calendar-alt me-2"></i>Férias e Licenças
+    </h1>
+    <div>
+        <a href="#" class="btn btn-primary btn-sm me-2">
+            <i class="fas fa-plus fa-sm text-white-50 me-1"></i> Nova Solicitação
+        </a>
+        <a href="#" class="btn btn-success btn-sm">
+            <i class="fas fa-file-excel fa-sm text-white-50 me-1"></i> Exportar
+        </a>
+    </div>
+</div>
+
+<!-- Solicitações pendentes -->
+<div class="card shadow mb-4">
+    <div class="card-header py-3">
+        <h6 class="m-0 font-weight-bold text-primary">Solicitações Pendentes</h6>
+    </div>
+    <div class="card-body">
+        {% if pending_leaves %}
+        <div class="table-responsive">
+            <table class="table table-bordered table-hover" id="pendingLeavesTable">
+                <thead>
+                    <tr>
+                        <th>Funcionário</th>
+                        <th>Tipo</th>
+                        <th>Início</th>
+                        <th>Fim</th>
+                        <th>Dias</th>
+                        <th>Motivo</th>
+                        <th>Ações</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for leave in pending_leaves %}
+                    <tr>
+                        <td>
+                            <a href="{{ url_for('hr.employee_detail', employee_id=leave.employee_id) }}">
+                                {{ leave.employee.first_name }} {{ leave.employee.last_name }}
+                            </a>
+                        </td>
+                        <td>
+                            {% if leave.leave_type == 'vacation' %}
+                            <span class="badge bg-success">Férias</span>
+                            {% elif leave.leave_type == 'sick_leave' %}
+                            <span class="badge bg-danger">Licença Médica</span>
+                            {% elif leave.leave_type == 'maternity' %}
+                            <span class="badge bg-info">Licença Maternidade</span>
+                            {% elif leave.leave_type == 'paternity' %}
+                            <span class="badge bg-info">Licença Paternidade</span>
+                            {% else %}
+                            <span class="badge bg-secondary">{{ leave.leave_type|title }}</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ leave.start_date.strftime('%d/%m/%Y') }}</td>
+                        <td>{{ leave.end_date.strftime('%d/%m/%Y') }}</td>
+                        <td>{{ leave.days_requested }}</td>
+                        <td>{{ leave.reason|truncate(30) }}</td>
+                        <td>
+                            <button type="button" class="btn btn-sm btn-success" data-bs-toggle="modal" data-bs-target="#approveLeaveModal{{ leave.id }}">
+                                <i class="fas fa-check"></i> Aprovar
+                            </button>
+                            
+                            <!-- Modal de aprovação -->
+                            <div class="modal fade" id="approveLeaveModal{{ leave.id }}" tabindex="-1" aria-hidden="true">
+                                <div class="modal-dialog">
+                                    <div class="modal-content">
+                                        <div class="modal-header">
+                                            <h5 class="modal-title">Aprovar Solicitação</h5>
+                                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                        </div>
+                                        <form action="{{ url_for('hr.approve_leave', leave_id=leave.id) }}" method="POST">
+                                            <div class="modal-body">
+                                                <div class="mb-3">
+                                                    <label class="form-label">Dias Aprovados</label>
+                                                    <input type="number" name="days_approved" class="form-control" value="{{ leave.days_requested }}" min="1" max="{{ leave.days_requested }}">
+                                                </div>
+                                                <div class="mb-3">
+                                                    <label class="form-label">Observações</label>
+                                                    <textarea name="notes" class="form-control" rows="3"></textarea>
+                                                </div>
+                                            </div>
+                                            <div class="modal-footer">
+                                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                                                <button type="submit" class="btn btn-success">Aprovar</button>
+                                            </div>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="text-center py-4">
+            <i class="fas fa-check-circle fa-5x mb-3 text-muted"></i>
+            <p class="lead text-muted">Nenhuma solicitação pendente.</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Férias programadas -->
+<div class="card shadow mb-4">
+    <div class="card-header py-3">
+        <h6 class="m-0 font-weight-bold text-primary">Próximas Férias e Licenças</h6>
+    </div>
+    <div class="card-body">
+        {% if upcoming_leaves %}
+        <div class="table-responsive">
+            <table class="table table-bordered table-hover" id="upcomingLeavesTable">
+                <thead>
+                    <tr>
+                        <th>Funcionário</th>
+                        <th>Tipo</th>
+                        <th>Início</th>
+                        <th>Fim</th>
+                        <th>Dias</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for leave in upcoming_leaves %}
+                    <tr>
+                        <td>
+                            <a href="{{ url_for('hr.employee_detail', employee_id=leave.employee_id) }}">
+                                {{ leave.employee.first_name }} {{ leave.employee.last_name }}
+                            </a>
+                        </td>
+                        <td>
+                            {% if leave.leave_type == 'vacation' %}
+                            <span class="badge bg-success">Férias</span>
+                            {% elif leave.leave_type == 'sick_leave' %}
+                            <span class="badge bg-danger">Licença Médica</span>
+                            {% elif leave.leave_type == 'maternity' %}
+                            <span class="badge bg-info">Licença Maternidade</span>
+                            {% elif leave.leave_type == 'paternity' %}
+                            <span class="badge bg-info">Licença Paternidade</span>
+                            {% else %}
+                            <span class="badge bg-secondary">{{ leave.leave_type|title }}</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ leave.start_date.strftime('%d/%m/%Y') }}</td>
+                        <td>{{ leave.end_date.strftime('%d/%m/%Y') }}</td>
+                        <td>{{ leave.days_approved or leave.days_requested }}</td>
+                        <td>
+                            <span class="badge bg-success">Aprovado</span>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="text-center py-4">
+            <i class="fas fa-calendar-alt fa-5x mb-3 text-muted"></i>
+            <p class="lead text-muted">Nenhuma férias ou licença programada.</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Calendário de ausências -->
+<div class="card shadow mb-4">
+    <div class="card-header py-3">
+        <h6 class="m-0 font-weight-bold text-primary">Calendário de Ausências</h6>
+    </div>
+    <div class="card-body">
+        <div id="leavesCalendar"></div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    $(document).ready(function() {
+        // Inicializa os DataTables
+        $('#pendingLeavesTable, #upcomingLeavesTable').DataTable({
+            "paging": false,
+            "searching": false,
+            "info": false,
+            "language": {
+                "url": "//cdn.datatables.net/plug-ins/1.10.25/i18n/Portuguese-Brasil.json"
+            }
+        });
+        
+        // Simulação básica de calendário (em produção usaria uma biblioteca completa)
+        const calendarEl = document.getElementById('leavesCalendar');
+        if (calendarEl) {
+            // Aqui adicionaríamos integração com FullCalendar ou similar
+            calendarEl.innerHTML = '<div class="text-center py-4 text-muted">Calendário de ausências seria exibido aqui</div>';
+        }
+    });
+</script>
+{% endblock %}

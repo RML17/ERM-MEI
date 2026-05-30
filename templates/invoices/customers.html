@@ -1,0 +1,325 @@
+{% extends "base.html" %}
+
+{% block title %}Clientes - Sistema de Gestão{% endblock %}
+
+{% block content %}
+<div class="d-sm-flex align-items-center justify-content-between mb-4">
+    <h1 class="h3 mb-0 text-light">
+        <i class="fas fa-users me-2"></i>Gerenciamento de Clientes
+    </h1>
+    <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#createCustomerModal">
+        <i class="fas fa-plus fa-sm text-white-50 me-1"></i> Novo Cliente
+    </button>
+</div>
+
+<!-- Modal para criar cliente -->
+<div class="modal fade" id="createCustomerModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Novo Cliente</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form method="POST" action="{{ url_for('invoices.customers') }}">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="name" class="form-label">Nome/Razão Social</label>
+                        <input type="text" class="form-control" id="name" name="name" required>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="document_type" class="form-label">Tipo de Documento</label>
+                            <select class="form-select" id="document_type" name="document_type" required>
+                                <option value="CPF">CPF</option>
+                                <option value="CNPJ">CNPJ</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="document" class="form-label">Número do Documento</label>
+                            <input type="text" class="form-control" id="document" name="document" required>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="state_registration" class="form-label">Inscrição Estadual</label>
+                        <input type="text" class="form-control" id="state_registration" name="state_registration">
+                    </div>
+                    <div class="mb-3">
+                        <label for="address" class="form-label">Endereço</label>
+                        <input type="text" class="form-control" id="address" name="address">
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="city" class="form-label">Cidade</label>
+                            <input type="text" class="form-control" id="city" name="city">
+                        </div>
+                        <div class="col-md-3">
+                            <label for="state" class="form-label">Estado</label>
+                            <input type="text" class="form-control" id="state" name="state" maxlength="2">
+                        </div>
+                        <div class="col-md-3">
+                            <label for="zip_code" class="form-label">CEP</label>
+                            <input type="text" class="form-control" id="zip_code" name="zip_code">
+                        </div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="phone" class="form-label">Telefone</label>
+                            <input type="text" class="form-control" id="phone" name="phone">
+                        </div>
+                        <div class="col-md-6">
+                            <label for="email" class="form-label">E-mail</label>
+                            <input type="email" class="form-control" id="email" name="email">
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Cadastrar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Lista de clientes -->
+<div class="card shadow mb-4">
+    <div class="card-header py-3">
+        <h6 class="m-0 font-weight-bold text-primary">Clientes Cadastrados</h6>
+    </div>
+    <div class="card-body">
+        {% if customers %}
+        <div class="table-responsive">
+            <table class="table table-bordered table-hover" id="customersTable">
+                <thead>
+                    <tr>
+                        <th>Nome/Razão Social</th>
+                        <th>Documento</th>
+                        <th>Cidade/UF</th>
+                        <th>Telefone</th>
+                        <th>E-mail</th>
+                        <th>Ações</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for customer in customers %}
+                    <tr>
+                        <td>{{ customer.name }}</td>
+                        <td>
+                            {% if customer.document_type == 'CPF' %}
+                            CPF: {{ customer.document }}
+                            {% else %}
+                            CNPJ: {{ customer.document }}
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if customer.city and customer.state %}
+                            {{ customer.city }}/{{ customer.state }}
+                            {% else %}
+                            -
+                            {% endif %}
+                        </td>
+                        <td>{{ customer.phone or '-' }}</td>
+                        <td>{{ customer.email or '-' }}</td>
+                        <td>
+                            <div class="btn-group">
+                                <button class="btn btn-sm btn-info" data-bs-toggle="modal" data-bs-target="#viewCustomerModal{{ customer.id }}">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                                <button class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#editCustomerModal{{ customer.id }}">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <button class="btn btn-sm btn-danger" data-bs-toggle="modal" data-bs-target="#deleteCustomerModal{{ customer.id }}">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                            
+                            <!-- Modal para visualizar -->
+                            <div class="modal fade" id="viewCustomerModal{{ customer.id }}" tabindex="-1" aria-hidden="true">
+                                <div class="modal-dialog">
+                                    <div class="modal-content">
+                                        <div class="modal-header">
+                                            <h5 class="modal-title">Detalhes do Cliente</h5>
+                                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                        </div>
+                                        <div class="modal-body">
+                                            <dl class="row">
+                                                <dt class="col-sm-4">Nome/Razão Social:</dt>
+                                                <dd class="col-sm-8">{{ customer.name }}</dd>
+                                                
+                                                <dt class="col-sm-4">Documento:</dt>
+                                                <dd class="col-sm-8">
+                                                    {{ customer.document_type }}: {{ customer.document }}
+                                                </dd>
+                                                
+                                                <dt class="col-sm-4">Inscrição Estadual:</dt>
+                                                <dd class="col-sm-8">{{ customer.state_registration or 'Não informado' }}</dd>
+                                                
+                                                <dt class="col-sm-4">Endereço:</dt>
+                                                <dd class="col-sm-8">{{ customer.address or 'Não informado' }}</dd>
+                                                
+                                                <dt class="col-sm-4">Cidade/UF:</dt>
+                                                <dd class="col-sm-8">
+                                                    {% if customer.city and customer.state %}
+                                                    {{ customer.city }}/{{ customer.state }}
+                                                    {% else %}
+                                                    Não informado
+                                                    {% endif %}
+                                                </dd>
+                                                
+                                                <dt class="col-sm-4">CEP:</dt>
+                                                <dd class="col-sm-8">{{ customer.zip_code or 'Não informado' }}</dd>
+                                                
+                                                <dt class="col-sm-4">Telefone:</dt>
+                                                <dd class="col-sm-8">{{ customer.phone or 'Não informado' }}</dd>
+                                                
+                                                <dt class="col-sm-4">E-mail:</dt>
+                                                <dd class="col-sm-8">{{ customer.email or 'Não informado' }}</dd>
+                                                
+                                                <dt class="col-sm-4">Cadastrado em:</dt>
+                                                <dd class="col-sm-8">{{ customer.created_at.strftime('%d/%m/%Y %H:%M') }}</dd>
+                                                
+                                                <dt class="col-sm-4">Atualizado em:</dt>
+                                                <dd class="col-sm-8">{{ customer.updated_at.strftime('%d/%m/%Y %H:%M') }}</dd>
+                                            </dl>
+                                        </div>
+                                        <div class="modal-footer">
+                                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="text-center py-4">
+            <i class="fas fa-users fa-5x mb-3 text-muted"></i>
+            <p class="lead text-muted">Nenhum cliente cadastrado.</p>
+            <button class="btn btn-primary mt-2" data-bs-toggle="modal" data-bs-target="#createCustomerModal">
+                <i class="fas fa-plus me-1"></i> Adicionar Primeiro Cliente
+            </button>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Estatísticas de clientes -->
+<div class="row">
+    <div class="col-lg-6">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">Clientes por Tipo</h6>
+            </div>
+            <div class="card-body">
+                <div class="chart-pie pt-4 pb-2">
+                    <canvas id="clientesTipoChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-6">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">Clientes por Região</h6>
+            </div>
+            <div class="card-body">
+                <div class="chart-pie pt-4 pb-2">
+                    <canvas id="clientesRegiaoChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    $(document).ready(function() {
+        // Inicializa o DataTable
+        $('#customersTable').DataTable({
+            "language": {
+                "url": "//cdn.datatables.net/plug-ins/1.10.25/i18n/Portuguese-Brasil.json"
+            }
+        });
+        
+        // Gráfico de tipos de cliente
+        var tipoContext = document.getElementById("clientesTipoChart");
+        if (tipoContext) {
+            var tipoChart = new Chart(tipoContext, {
+                type: 'pie',
+                data: {
+                    labels: ["Pessoa Física (CPF)", "Pessoa Jurídica (CNPJ)"],
+                    datasets: [{
+                        data: [
+                            {{ customers|selectattr('document_type', 'equalto', 'CPF')|list|length }}, 
+                            {{ customers|selectattr('document_type', 'equalto', 'CNPJ')|list|length }}
+                        ],
+                        backgroundColor: ['#4e73df', '#1cc88a'],
+                        hoverBackgroundColor: ['#2e59d9', '#17a673'],
+                    }]
+                },
+                options: {
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                        }
+                    }
+                }
+            });
+        }
+        
+        // Gráfico de clientes por região
+        var regiaoContext = document.getElementById("clientesRegiaoChart");
+        if (regiaoContext) {
+            var regiaoChart = new Chart(regiaoContext, {
+                type: 'pie',
+                data: {
+                    labels: ["SP", "RJ", "MG", "PR", "RS", "Outros"],
+                    datasets: [{
+                        data: [
+                            {{ customers|selectattr('state', 'equalto', 'SP')|list|length }},
+                            {{ customers|selectattr('state', 'equalto', 'RJ')|list|length }},
+                            {{ customers|selectattr('state', 'equalto', 'MG')|list|length }},
+                            {{ customers|selectattr('state', 'equalto', 'PR')|list|length }},
+                            {{ customers|selectattr('state', 'equalto', 'RS')|list|length }},
+                            {{ customers|rejectattr('state', 'in', ['SP', 'RJ', 'MG', 'PR', 'RS'])|list|length }}
+                        ],
+                        backgroundColor: ['#4e73df', '#1cc88a', '#36b9cc', '#f6c23e', '#e74a3b', '#858796'],
+                        hoverBackgroundColor: ['#2e59d9', '#17a673', '#2c9faf', '#dda20a', '#be2617', '#60616f'],
+                    }]
+                },
+                options: {
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                        }
+                    }
+                }
+            });
+        }
+    });
+    
+    // Máscara para CPF/CNPJ
+    $(document).ready(function() {
+        $('#document_type').change(function() {
+            var tipo = $(this).val();
+            var documentInput = $('#document');
+            
+            if (tipo === 'CPF') {
+                documentInput.attr('placeholder', '000.000.000-00');
+                // Aqui você pode adicionar uma máscara para CPF
+            } else {
+                documentInput.attr('placeholder', '00.000.000/0000-00');
+                // Aqui você pode adicionar uma máscara para CNPJ
+            }
+        }).trigger('change');
+    });
+</script>
+{% endblock %}

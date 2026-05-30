@@ -1,0 +1,133 @@
+{% extends "base.html" %}
+
+{% block title %}{{ title }} - Sistema de Gestão Empresarial{% endblock %}
+
+{% block content %}
+<div class="d-sm-flex align-items-center justify-content-between mb-4">
+    <h1 class="h3 mb-0 text-light">
+        <i class="fas fa-route me-2"></i>{{ title }}
+    </h1>
+    <a href="{{ url_for('logistics.routes') }}" class="btn btn-secondary btn-sm">
+        <i class="fas fa-arrow-left fa-sm text-white-50 me-1"></i> Voltar
+    </a>
+</div>
+
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">Dados da Rota</h6>
+            </div>
+            <div class="card-body">
+                <form method="POST">
+                    {{ form.hidden_tag() }}
+                    
+                    <div class="mb-3">
+                        {{ form.name.label(class="form-label") }}
+                        {{ form.name(class="form-control") }}
+                        {% if form.name.errors %}
+                            <div class="text-danger">{{ form.name.errors[0] }}</div>
+                        {% endif %}
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6 class="text-primary mb-3">Origem</h6>
+                            <div class="mb-3">
+                                {{ form.origin_zip.label(class="form-label") }}
+                                {{ form.origin_zip(class="form-control") }}
+                                {% if form.origin_zip.errors %}
+                                    <div class="text-danger">{{ form.origin_zip.errors[0] }}</div>
+                                {% endif %}
+                            </div>
+                            <div class="mb-3">
+                                {{ form.origin_city.label(class="form-label") }}
+                                {{ form.origin_city(class="form-control") }}
+                            </div>
+                            <div class="mb-3">
+                                {{ form.origin_state.label(class="form-label") }}
+                                {{ form.origin_state(class="form-control") }}
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <h6 class="text-primary mb-3">Destino</h6>
+                            <div class="mb-3">
+                                {{ form.destination_zip.label(class="form-label") }}
+                                {{ form.destination_zip(class="form-control") }}
+                                {% if form.destination_zip.errors %}
+                                    <div class="text-danger">{{ form.destination_zip.errors[0] }}</div>
+                                {% endif %}
+                            </div>
+                            <div class="mb-3">
+                                {{ form.destination_city.label(class="form-label") }}
+                                {{ form.destination_city(class="form-control") }}
+                            </div>
+                            <div class="mb-3">
+                                {{ form.destination_state.label(class="form-label") }}
+                                {{ form.destination_state(class="form-control") }}
+                            </div>
+                        </div>
+                    </div>
+
+                    <h6 class="text-primary mb-3 mt-4">Informações da Rota</h6>
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                {{ form.route_type.label(class="form-label") }}
+                                {{ form.route_type(class="form-select") }}
+                                {% if form.route_type.errors %}
+                                    <div class="text-danger">{{ form.route_type.errors[0] }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                {{ form.distance_km.label(class="form-label") }}
+                                {{ form.distance_km(class="form-control") }}
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                {{ form.estimated_time_hours.label(class="form-label") }}
+                                {{ form.estimated_time_hours(class="form-control") }}
+                            </div>
+                        </div>
+                    </div>
+
+                    <h6 class="text-primary mb-3 mt-4">Custos</h6>
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                {{ form.base_cost.label(class="form-label") }}
+                                {{ form.base_cost(class="form-control") }}
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                {{ form.fuel_cost_per_km.label(class="form-label") }}
+                                {{ form.fuel_cost_per_km(class="form-control") }}
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                {{ form.toll_cost.label(class="form-label") }}
+                                {{ form.toll_cost(class="form-control") }}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        {{ form.notes.label(class="form-label") }}
+                        {{ form.notes(class="form-control", rows="3") }}
+                    </div>
+
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                        <a href="{{ url_for('logistics.routes') }}" class="btn btn-secondary me-md-2">Cancelar</a>
+                        {{ form.submit(class="btn btn-primary") }}
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

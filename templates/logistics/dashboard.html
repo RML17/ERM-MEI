@@ -1,0 +1,362 @@
+{% extends "base.html" %}
+
+{% block title %}Logística - Sistema de Gestão Empresarial{% endblock %}
+
+{% block content %}
+<div class="d-sm-flex align-items-center justify-content-between mb-4">
+    <h1 class="h3 mb-0 text-light">
+        <i class="fas fa-truck me-2"></i>Módulo Logístico
+    </h1>
+    <div>
+        <a href="{{ url_for('logistics.create_shipment') }}" class="btn btn-primary btn-sm me-2">
+            <i class="fas fa-plus fa-sm text-white-50 me-1"></i> Novo Envio
+        </a>
+        <a href="{{ url_for('logistics.create_company') }}" class="btn btn-success btn-sm">
+            <i class="fas fa-building fa-sm text-white-50 me-1"></i> Nova Transportadora
+        </a>
+    </div>
+</div>
+
+<!-- KPIs Row -->
+<div class="row">
+    <!-- Total de Envios -->
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card bg-primary bg-opacity-25 shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col me-2">
+                        <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">Total de Envios</div>
+                        <div class="h5 mb-0 font-weight-bold text-light">{{ total_shipments }}</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-box fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Envios Pendentes -->
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card bg-warning bg-opacity-25 shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col me-2">
+                        <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">Pendentes</div>
+                        <div class="h5 mb-0 font-weight-bold text-light">{{ pending_shipments }}</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-clock fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Em Trânsito -->
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card bg-info bg-opacity-25 shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col me-2">
+                        <div class="text-xs font-weight-bold text-info text-uppercase mb-1">Em Trânsito</div>
+                        <div class="h5 mb-0 font-weight-bold text-light">{{ in_transit_shipments }}</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-shipping-fast fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Entregues -->
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card bg-success bg-opacity-25 shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col me-2">
+                        <div class="text-xs font-weight-bold text-success text-uppercase mb-1">Entregues</div>
+                        <div class="h5 mb-0 font-weight-bold text-light">{{ delivered_shipments }}</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-check-circle fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Recursos Row -->
+<div class="row">
+    <!-- Transportadoras Ativas -->
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card bg-secondary bg-opacity-25 shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col me-2">
+                        <div class="text-xs font-weight-bold text-secondary text-uppercase mb-1">Transportadoras</div>
+                        <div class="h5 mb-0 font-weight-bold text-light">{{ active_companies }}</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-building fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Veículos Ativos -->
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card bg-secondary bg-opacity-25 shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col me-2">
+                        <div class="text-xs font-weight-bold text-secondary text-uppercase mb-1">Veículos Ativos</div>
+                        <div class="h5 mb-0 font-weight-bold text-light">{{ active_vehicles }}</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-truck fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Motoristas Disponíveis -->
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card bg-secondary bg-opacity-25 shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col me-2">
+                        <div class="text-xs font-weight-bold text-secondary text-uppercase mb-1">Motoristas</div>
+                        <div class="h5 mb-0 font-weight-bold text-light">{{ available_drivers }}</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-user-tie fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Menu de Acesso Rápido -->
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card bg-dark bg-opacity-25 shadow h-100 py-2">
+            <div class="card-body">
+                <div class="text-center">
+                    <div class="text-xs font-weight-bold text-light text-uppercase mb-2">Acesso Rápido</div>
+                    <div class="btn-group-vertical d-grid gap-1">
+                        <a href="{{ url_for('logistics.shipments') }}" class="btn btn-sm btn-outline-light">
+                            <i class="fas fa-search me-1"></i> Rastrear Envios
+                        </a>
+                        <a href="{{ url_for('logistics.routes') }}" class="btn btn-sm btn-outline-light">
+                            <i class="fas fa-route me-1"></i> Gerenciar Rotas
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Content Row -->
+<div class="row">
+    <!-- Gráfico de Status dos Envios -->
+    <div class="col-xl-6 col-lg-6">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">Status dos Envios</h6>
+            </div>
+            <div class="card-body">
+                <div class="chart-pie pt-4 pb-2">
+                    <canvas id="statusChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Envios Recentes -->
+    <div class="col-xl-6 col-lg-6">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">Envios Recentes</h6>
+            </div>
+            <div class="card-body">
+                {% if recent_shipments %}
+                    <div class="table-responsive">
+                        <table class="table table-sm table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Código</th>
+                                    <th>Destinatário</th>
+                                    <th>Status</th>
+                                    <th>Data</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for shipment in recent_shipments %}
+                                <tr>
+                                    <td>
+                                        <a href="{{ url_for('logistics.view_shipment', id=shipment.id) }}" class="text-decoration-none">
+                                            {{ shipment.tracking_code }}
+                                        </a>
+                                    </td>
+                                    <td>{{ shipment.recipient_name }}</td>
+                                    <td>
+                                        {% if shipment.status.name == 'PENDING' %}
+                                            <span class="badge bg-warning text-dark">{{ shipment.status.value }}</span>
+                                        {% elif shipment.status.name == 'IN_TRANSIT' %}
+                                            <span class="badge bg-info">{{ shipment.status.value }}</span>
+                                        {% elif shipment.status.name == 'DELIVERED' %}
+                                            <span class="badge bg-success">{{ shipment.status.value }}</span>
+                                        {% else %}
+                                            <span class="badge bg-secondary">{{ shipment.status.value }}</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ shipment.created_date.strftime('%d/%m/%Y') }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <div class="text-center py-4">
+                        <i class="fas fa-box fa-3x text-gray-300 mb-3"></i>
+                        <p class="text-muted">Nenhum envio encontrado</p>
+                        <a href="{{ url_for('logistics.create_shipment') }}" class="btn btn-primary">
+                            <i class="fas fa-plus me-1"></i> Criar Primeiro Envio
+                        </a>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Menu de Navegação -->
+<div class="row">
+    <div class="col-12">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">Módulos Disponíveis</h6>
+            </div>
+            <div class="card-body">
+                <div class="row text-center">
+                    <div class="col-md-2 mb-3">
+                        <a href="{{ url_for('logistics.shipments') }}" class="text-decoration-none">
+                            <div class="card h-100 border-primary">
+                                <div class="card-body">
+                                    <i class="fas fa-box fa-2x text-primary mb-2"></i>
+                                    <h6 class="card-title">Envios</h6>
+                                    <p class="card-text small">Gerenciar entregas</p>
+                                </div>
+                            </div>
+                        </a>
+                    </div>
+                    
+                    <div class="col-md-2 mb-3">
+                        <a href="{{ url_for('logistics.companies') }}" class="text-decoration-none">
+                            <div class="card h-100 border-success">
+                                <div class="card-body">
+                                    <i class="fas fa-building fa-2x text-success mb-2"></i>
+                                    <h6 class="card-title">Transportadoras</h6>
+                                    <p class="card-text small">Cadastro de empresas</p>
+                                </div>
+                            </div>
+                        </a>
+                    </div>
+                    
+                    <div class="col-md-2 mb-3">
+                        <a href="{{ url_for('logistics.routes') }}" class="text-decoration-none">
+                            <div class="card h-100 border-info">
+                                <div class="card-body">
+                                    <i class="fas fa-route fa-2x text-info mb-2"></i>
+                                    <h6 class="card-title">Rotas</h6>
+                                    <p class="card-text small">Definir trajetos</p>
+                                </div>
+                            </div>
+                        </a>
+                    </div>
+                    
+                    <div class="col-md-2 mb-3">
+                        <a href="{{ url_for('logistics.vehicles') }}" class="text-decoration-none">
+                            <div class="card h-100 border-warning">
+                                <div class="card-body">
+                                    <i class="fas fa-truck fa-2x text-warning mb-2"></i>
+                                    <h6 class="card-title">Veículos</h6>
+                                    <p class="card-text small">Frota própria</p>
+                                </div>
+                            </div>
+                        </a>
+                    </div>
+                    
+                    <div class="col-md-2 mb-3">
+                        <a href="{{ url_for('logistics.drivers') }}" class="text-decoration-none">
+                            <div class="card h-100 border-danger">
+                                <div class="card-body">
+                                    <i class="fas fa-user-tie fa-2x text-danger mb-2"></i>
+                                    <h6 class="card-title">Motoristas</h6>
+                                    <p class="card-text small">Equipe de entrega</p>
+                                </div>
+                            </div>
+                        </a>
+                    </div>
+                    
+                    <div class="col-md-2 mb-3">
+                        <div class="card h-100 border-secondary">
+                            <div class="card-body">
+                                <i class="fas fa-chart-line fa-2x text-secondary mb-2"></i>
+                                <h6 class="card-title">Relatórios</h6>
+                                <p class="card-text small">Em breve</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+// Gráfico de Status dos Envios
+const ctx = document.getElementById('statusChart').getContext('2d');
+const statusChart = new Chart(ctx, {
+    type: 'doughnut',
+    data: {
+        labels: {{ status_chart.labels | tojson }},
+        datasets: [{
+            data: {{ status_chart.data | tojson }},
+            backgroundColor: [
+                '#f6c23e',
+                '#36b9cc',
+                '#1cc88a',
+                '#e74a3b',
+                '#858796'
+            ],
+            hoverBackgroundColor: [
+                '#f4b619',
+                '#2c9faf',
+                '#17a673',
+                '#e02d1b',
+                '#6c757d'
+            ],
+            borderWidth: 2,
+        }],
+    },
+    options: {
+        maintainAspectRatio: false,
+        plugins: {
+            legend: {
+                display: true,
+                position: 'bottom'
+            }
+        }
+    },
+});
+</script>
+{% endblock %}

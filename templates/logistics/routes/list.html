@@ -1,0 +1,106 @@
+{% extends "base.html" %}
+
+{% block title %}Rotas - Sistema de Gestão Empresarial{% endblock %}
+
+{% block content %}
+<div class="d-sm-flex align-items-center justify-content-between mb-4">
+    <h1 class="h3 mb-0 text-light">
+        <i class="fas fa-route me-2"></i>Rotas de Entrega
+    </h1>
+    <a href="{{ url_for('logistics.create_route') }}" class="btn btn-primary btn-sm">
+        <i class="fas fa-plus fa-sm text-white-50 me-1"></i> Nova Rota
+    </a>
+</div>
+
+<div class="card shadow mb-4">
+    <div class="card-header py-3">
+        <h6 class="m-0 font-weight-bold text-primary">Lista de Rotas</h6>
+    </div>
+    <div class="card-body">
+        {% if routes %}
+            <div class="table-responsive">
+                <table class="table table-striped" id="rotasTable">
+                    <thead>
+                        <tr>
+                            <th>Nome</th>
+                            <th>Origem</th>
+                            <th>Destino</th>
+                            <th>Tipo</th>
+                            <th>Distância</th>
+                            <th>Tempo</th>
+                            <th>Custo</th>
+                            <th>Status</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for route in routes %}
+                        <tr>
+                            <td><strong>{{ route.name }}</strong></td>
+                            <td>
+                                {{ route.origin_city or route.origin_zip }}
+                                {% if route.origin_state %}/{{ route.origin_state }}{% endif %}
+                            </td>
+                            <td>
+                                {{ route.destination_city or route.destination_zip }}
+                                {% if route.destination_state %}/{{ route.destination_state }}{% endif %}
+                            </td>
+                            <td>
+                                <span class="badge 
+                                    {% if route.route_type.name == 'LOCAL' %}bg-success
+                                    {% elif route.route_type.name == 'ESTADUAL' %}bg-primary
+                                    {% elif route.route_type.name == 'NACIONAL' %}bg-warning
+                                    {% else %}bg-danger{% endif %}">
+                                    {{ route.route_type.value }}
+                                </span>
+                            </td>
+                            <td>{{ route.distance_km or '-' }} km</td>
+                            <td>{{ route.estimated_time_hours or '-' }}h</td>
+                            <td>R$ {{ "%.2f"|format(route.total_cost()) }}</td>
+                            <td>
+                                {% if route.is_active %}
+                                    <span class="badge bg-success">Ativa</span>
+                                {% else %}
+                                    <span class="badge bg-danger">Inativa</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <div class="btn-group btn-group-sm" role="group">
+                                    <a href="{{ url_for('logistics.edit_route', id=route.id) }}" 
+                                       class="btn btn-outline-primary btn-sm" title="Editar">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <div class="text-center py-5">
+                <i class="fas fa-route fa-3x text-gray-300 mb-3"></i>
+                <h5 class="text-muted">Nenhuma rota cadastrada</h5>
+                <p class="text-muted">Defina as rotas de entrega para calcular fretes</p>
+                <a href="{{ url_for('logistics.create_route') }}" class="btn btn-primary">
+                    <i class="fas fa-plus me-1"></i> Cadastrar Rota
+                </a>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+$(document).ready(function() {
+    $('#rotasTable').DataTable({
+        "language": {
+            "url": "//cdn.datatables.net/plug-ins/1.11.5/i18n/pt-BR.json"
+        },
+        "pageLength": 25,
+        "order": [[0, "asc"]]
+    });
+});
+</script>
+{% endblock %}

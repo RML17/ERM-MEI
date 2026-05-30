@@ -1,0 +1,91 @@
+{% extends "base.html" %}
+
+{% block title %}Importar XML - Sistema de Gestão Financeira{% endblock %}
+
+{% block content %}
+<div class="d-sm-flex align-items-center justify-content-between mb-4">
+    <h1 class="h3 mb-0 text-light">Importar Nota Fiscal (XML)</h1>
+    <a href="{{ url_for('invoices.index') }}" class="btn btn-secondary btn-sm">
+        <i class="fas fa-arrow-left me-1"></i>Voltar para Lista
+    </a>
+</div>
+
+<div class="row">
+    <div class="col-lg-8 mx-auto">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">Upload de Arquivo XML</h6>
+            </div>
+            <div class="card-body">
+                <form method="POST" action="{{ url_for('invoices.import_xml') }}" enctype="multipart/form-data">
+                    {{ form.hidden_tag() }}
+                    
+                    <div class="mb-4">
+                        <p class="mb-3">Você pode importar notas fiscais a partir de arquivos XML no formato oficial da SEFAZ (NF-e, CT-e).</p>
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle me-2"></i>
+                            O sistema tentará associar automaticamente os produtos, clientes e fornecedores contidos no XML com os cadastros existentes. Caso não encontre correspondência, novos registros serão criados.
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="{{ form.invoice_type.id }}" class="form-label">Tipo de Nota</label>
+                        {{ form.invoice_type(class="form-select" + (" is-invalid" if form.invoice_type.errors else "")) }}
+                        {% if form.invoice_type.errors %}
+                            <div class="invalid-feedback">
+                                {% for error in form.invoice_type.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                        <div class="form-text">Selecione se esta é uma nota de entrada (compra) ou saída (venda).</div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="{{ form.xml_file.id }}" class="form-label">Arquivo XML</label>
+                        {{ form.xml_file(class="form-control" + (" is-invalid" if form.xml_file.errors else ""), accept=".xml") }}
+                        {% if form.xml_file.errors %}
+                            <div class="invalid-feedback">
+                                {% for error in form.xml_file.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                        <div class="form-text">Selecione o arquivo XML da nota fiscal.</div>
+                    </div>
+                    
+                    <hr>
+                    
+                    <div class="d-flex justify-content-end">
+                        <a href="{{ url_for('invoices.index') }}" class="btn btn-secondary me-2">Cancelar</a>
+                        {{ form.submit(class="btn btn-primary") }}
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+        <div class="card shadow">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">Instruções</h6>
+            </div>
+            <div class="card-body">
+                <h6 class="font-weight-bold">Como importar uma nota fiscal:</h6>
+                <ol>
+                    <li class="mb-2">Selecione o tipo de nota fiscal (entrada ou saída).</li>
+                    <li class="mb-2">Clique em "Escolher arquivo" e selecione o arquivo XML da nota fiscal.</li>
+                    <li class="mb-2">Clique em "Importar XML" para processar o arquivo.</li>
+                    <li class="mb-2">Após a importação, verifique os dados e, se necessário, faça ajustes.</li>
+                </ol>
+                
+                <h6 class="font-weight-bold mt-3">Observações importantes:</h6>
+                <ul>
+                    <li class="mb-2">O arquivo deve estar no formato XML oficial da SEFAZ (NF-e, CT-e).</li>
+                    <li class="mb-2">Certifique-se de que o XML não está corrompido ou incompleto.</li>
+                    <li class="mb-2">O sistema tentará criar novos registros para clientes, fornecedores e produtos não encontrados.</li>
+                    <li class="mb-2">Após a importação, você poderá editar a nota fiscal para ajustar informações.</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

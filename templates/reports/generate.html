@@ -1,0 +1,206 @@
+{% extends "base.html" %}
+
+{% block title %}Gerar Relatórios - Sistema de Gestão Financeira{% endblock %}
+
+{% block content %}
+<div class="d-sm-flex align-items-center justify-content-between mb-4">
+    <h1 class="h3 mb-0 text-light">Geração de Relatórios</h1>
+</div>
+
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">Configurar Relatório</h6>
+            </div>
+            <div class="card-body">
+                <form method="POST" action="{{ url_for('reports.report_generation') }}">
+                    {{ form.hidden_tag() }}
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="{{ form.report_type.id }}" class="form-label">Tipo de Relatório</label>
+                            {{ form.report_type(class="form-select" + (" is-invalid" if form.report_type.errors else "")) }}
+                            {% if form.report_type.errors %}
+                                <div class="invalid-feedback">
+                                    {% for error in form.report_type.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-6">
+                            <label for="{{ form.format_type.id }}" class="form-label">Formato</label>
+                            {{ form.format_type(class="form-select" + (" is-invalid" if form.format_type.errors else "")) }}
+                            {% if form.format_type.errors %}
+                                <div class="invalid-feedback">
+                                    {% for error in form.format_type.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="{{ form.start_date.id }}" class="form-label">Data Inicial</label>
+                            {{ form.start_date(class="form-control" + (" is-invalid" if form.start_date.errors else ""), type="date") }}
+                            {% if form.start_date.errors %}
+                                <div class="invalid-feedback">
+                                    {% for error in form.start_date.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-6">
+                            <label for="{{ form.end_date.id }}" class="form-label">Data Final</label>
+                            {{ form.end_date(class="form-control" + (" is-invalid" if form.end_date.errors else ""), type="date") }}
+                            {% if form.end_date.errors %}
+                                <div class="invalid-feedback">
+                                    {% for error in form.end_date.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div id="invoiceFilters" class="d-none">
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="{{ form.invoice_type.id }}" class="form-label">Tipo de Nota</label>
+                                {{ form.invoice_type(class="form-select" + (" is-invalid" if form.invoice_type.errors else "")) }}
+                                {% if form.invoice_type.errors %}
+                                    <div class="invalid-feedback">
+                                        {% for error in form.invoice_type.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-6">
+                                <label for="{{ form.invoice_status.id }}" class="form-label">Status da Nota</label>
+                                {{ form.invoice_status(class="form-select" + (" is-invalid" if form.invoice_status.errors else "")) }}
+                                {% if form.invoice_status.errors %}
+                                    <div class="invalid-feedback">
+                                        {% for error in form.invoice_status.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <div class="form-check">
+                                {{ form.include_items(class="form-check-input" + (" is-invalid" if form.include_items.errors else "")) }}
+                                <label class="form-check-label" for="{{ form.include_items.id }}">
+                                    Incluir Itens das Notas Fiscais
+                                </label>
+                                {% if form.include_items.errors %}
+                                    <div class="invalid-feedback">
+                                        {% for error in form.include_items.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="d-grid gap-2">
+                        {{ form.submit(class="btn btn-primary") }}
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-4">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">Informações</h6>
+            </div>
+            <div class="card-body">
+                <div id="reportInfoInvoices" class="report-info d-none">
+                    <h6 class="font-weight-bold"><i class="fas fa-file-invoice me-2"></i>Relatório de Notas Fiscais</h6>
+                    <p>Este relatório lista todas as notas fiscais emitidas ou recebidas no período selecionado, com informações detalhadas sobre valores, impostos e status.</p>
+                    <p>Opcionalmente, você pode incluir os itens de cada nota fiscal no relatório.</p>
+                </div>
+                
+                <div id="reportInfoUsers" class="report-info d-none">
+                    <h6 class="font-weight-bold"><i class="fas fa-users me-2"></i>Relatório de Usuários</h6>
+                    <p>Este relatório lista todos os usuários cadastrados no sistema, com suas respectivas funções, datas de criação e último acesso.</p>
+                </div>
+                
+                <div id="reportInfoInventory" class="report-info d-none">
+                    <h6 class="font-weight-bold"><i class="fas fa-boxes me-2"></i>Relatório de Estoque</h6>
+                    <p>Este relatório apresenta o status atual do estoque, com informações sobre produtos, quantidades disponíveis, valores e alertas para produtos com estoque abaixo do mínimo.</p>
+                </div>
+                
+                <div id="reportInfoFinancial" class="report-info d-none">
+                    <h6 class="font-weight-bold"><i class="fas fa-money-bill-wave me-2"></i>Relatório Financeiro</h6>
+                    <p>Este relatório apresenta um resumo financeiro do período selecionado, incluindo entradas, saídas, saldo e detalhes de todas as operações financeiras.</p>
+                </div>
+                
+                <div id="formatInfo" class="mt-4">
+                    <h6 class="font-weight-bold">Formatos Disponíveis</h6>
+                    <div class="d-flex align-items-center mb-2">
+                        <i class="fas fa-file-excel text-success me-2 fa-2x"></i>
+                        <div>
+                            <strong>Excel</strong> (.xlsx)<br>
+                            <small>Planilha formatada com dados tabulares.</small>
+                        </div>
+                    </div>
+                    <div class="d-flex align-items-center">
+                        <i class="fas fa-file-word text-primary me-2 fa-2x"></i>
+                        <div>
+                            <strong>Word</strong> (.docx)<br>
+                            <small>Documento formatado com dados textuais.</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const reportTypeSelect = document.getElementById('{{ form.report_type.id }}');
+        const invoiceFilters = document.getElementById('invoiceFilters');
+        const reportInfoBlocks = document.querySelectorAll('.report-info');
+        
+        // Função para mostrar/esconder filtros específicos de acordo com o tipo de relatório
+        function updateFilters() {
+            const reportType = reportTypeSelect.value;
+            
+            // Esconder todos os blocos de informação
+            reportInfoBlocks.forEach(block => block.classList.add('d-none'));
+            
+            // Mostrar filtros específicos de acordo com o tipo de relatório
+            if (reportType === 'invoices' || reportType === 'financial') {
+                invoiceFilters.classList.remove('d-none');
+            } else {
+                invoiceFilters.classList.add('d-none');
+            }
+            
+            // Mostrar informações específicas sobre o relatório selecionado
+            const infoBlock = document.getElementById('reportInfo' + reportType.charAt(0).toUpperCase() + reportType.slice(1));
+            if (infoBlock) {
+                infoBlock.classList.remove('d-none');
+            }
+        }
+        
+        // Inicializar com o valor atual
+        updateFilters();
+        
+        // Atualizar quando o tipo de relatório mudar
+        reportTypeSelect.addEventListener('change', updateFilters);
+    });
+</script>
+{% endblock %}

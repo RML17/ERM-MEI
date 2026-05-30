@@ -1,0 +1,160 @@
+{% extends "base.html" %}
+
+{% block title %}Envios - Sistema de Gestão Empresarial{% endblock %}
+
+{% block content %}
+<div class="d-sm-flex align-items-center justify-content-between mb-4">
+    <h1 class="h3 mb-0 text-light">
+        <i class="fas fa-box me-2"></i>Gerenciar Envios
+    </h1>
+    <a href="{{ url_for('logistics.create_shipment') }}" class="btn btn-primary btn-sm">
+        <i class="fas fa-plus fa-sm text-white-50 me-1"></i> Novo Envio
+    </a>
+</div>
+
+<!-- Filtros -->
+<div class="card shadow mb-4">
+    <div class="card-header py-3">
+        <h6 class="m-0 font-weight-bold text-primary">Filtros de Busca</h6>
+    </div>
+    <div class="card-body">
+        <form method="POST">
+            {{ form.hidden_tag() }}
+            <div class="row">
+                <div class="col-md-3">
+                    {{ form.tracking_code.label(class="form-label") }}
+                    {{ form.tracking_code(class="form-control") }}
+                </div>
+                <div class="col-md-3">
+                    {{ form.status.label(class="form-label") }}
+                    {{ form.status(class="form-select") }}
+                </div>
+                <div class="col-md-3">
+                    {{ form.shipping_company_id.label(class="form-label") }}
+                    {{ form.shipping_company_id(class="form-select") }}
+                </div>
+                <div class="col-md-3">
+                    {{ form.recipient_name.label(class="form-label") }}
+                    {{ form.recipient_name(class="form-control") }}
+                </div>
+            </div>
+            <div class="row mt-3">
+                <div class="col-md-3">
+                    {{ form.start_date.label(class="form-label") }}
+                    {{ form.start_date(class="form-control") }}
+                </div>
+                <div class="col-md-3">
+                    {{ form.end_date.label(class="form-label") }}
+                    {{ form.end_date(class="form-control") }}
+                </div>
+                <div class="col-md-6 d-flex align-items-end">
+                    {{ form.submit(class="btn btn-primary me-2") }}
+                    <a href="{{ url_for('logistics.shipments') }}" class="btn btn-outline-secondary">Limpar</a>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Lista de Envios -->
+<div class="card shadow mb-4">
+    <div class="card-header py-3">
+        <h6 class="m-0 font-weight-bold text-primary">Lista de Envios</h6>
+    </div>
+    <div class="card-body">
+        {% if shipments %}
+            <div class="table-responsive">
+                <table class="table table-striped" id="enviosTable">
+                    <thead>
+                        <tr>
+                            <th>Código</th>
+                            <th>Destinatário</th>
+                            <th>Transportadora</th>
+                            <th>Status</th>
+                            <th>Data Criação</th>
+                            <th>Peso</th>
+                            <th>Valor</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for shipment in shipments %}
+                        <tr>
+                            <td>
+                                <a href="{{ url_for('logistics.view_shipment', id=shipment.id) }}" class="text-decoration-none">
+                                    <strong>{{ shipment.tracking_code }}</strong>
+                                </a>
+                            </td>
+                            <td>
+                                {{ shipment.recipient_name }}
+                                <br><small class="text-muted">{{ shipment.recipient_city }}/{{ shipment.recipient_state }}</small>
+                            </td>
+                            <td>{{ shipment.shipping_company.name if shipment.shipping_company else '-' }}</td>
+                            <td>
+                                {% if shipment.status.name == 'PENDING' %}
+                                    <span class="badge bg-warning text-dark">{{ shipment.status.value }}</span>
+                                {% elif shipment.status.name == 'CONFIRMED' %}
+                                    <span class="badge bg-primary">{{ shipment.status.value }}</span>
+                                {% elif shipment.status.name == 'PICKED_UP' %}
+                                    <span class="badge bg-info">{{ shipment.status.value }}</span>
+                                {% elif shipment.status.name == 'IN_TRANSIT' %}
+                                    <span class="badge bg-info">{{ shipment.status.value }}</span>
+                                {% elif shipment.status.name == 'OUT_FOR_DELIVERY' %}
+                                    <span class="badge bg-warning">{{ shipment.status.value }}</span>
+                                {% elif shipment.status.name == 'DELIVERED' %}
+                                    <span class="badge bg-success">{{ shipment.status.value }}</span>
+                                {% elif shipment.status.name == 'RETURNED' %}
+                                    <span class="badge bg-danger">{{ shipment.status.value }}</span>
+                                {% elif shipment.status.name == 'CANCELLED' %}
+                                    <span class="badge bg-secondary">{{ shipment.status.value }}</span>
+                                {% else %}
+                                    <span class="badge bg-secondary">{{ shipment.status.value }}</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ shipment.created_date.strftime('%d/%m/%Y %H:%M') }}</td>
+                            <td>{{ shipment.total_weight }} kg</td>
+                            <td>R$ {{ "%.2f"|format(shipment.total_cost or 0) }}</td>
+                            <td>
+                                <div class="btn-group btn-group-sm" role="group">
+                                    <a href="{{ url_for('logistics.view_shipment', id=shipment.id) }}" 
+                                       class="btn btn-outline-primary btn-sm" title="Visualizar">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                    <a href="{{ url_for('logistics.track_shipment', id=shipment.id) }}" 
+                                       class="btn btn-outline-info btn-sm" title="Rastrear">
+                                        <i class="fas fa-map-marker-alt"></i>
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <div class="text-center py-5">
+                <i class="fas fa-box fa-3x text-gray-300 mb-3"></i>
+                <h5 class="text-muted">Nenhum envio encontrado</h5>
+                <p class="text-muted">Comece criando seu primeiro envio</p>
+                <a href="{{ url_for('logistics.create_shipment') }}" class="btn btn-primary">
+                    <i class="fas fa-plus me-1"></i> Criar Envio
+                </a>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+$(document).ready(function() {
+    $('#enviosTable').DataTable({
+        "language": {
+            "url": "//cdn.datatables.net/plug-ins/1.11.5/i18n/pt-BR.json"
+        },
+        "pageLength": 25,
+        "order": [[4, "desc"]]
+    });
+});
+</script>
+{% endblock %}

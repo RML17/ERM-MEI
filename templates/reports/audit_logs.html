@@ -1,0 +1,260 @@
+{% extends "base.html" %}
+
+{% block title %}Logs de Auditoria - Sistema de Gestão Financeira{% endblock %}
+
+{% block content %}
+<div class="d-sm-flex align-items-center justify-content-between mb-4">
+    <h1 class="h3 mb-0 text-light">Logs de Auditoria</h1>
+</div>
+
+<!-- Filter Card -->
+<div class="card shadow mb-4">
+    <div class="card-header py-3">
+        <h6 class="m-0 font-weight-bold text-primary">Filtrar Logs</h6>
+    </div>
+    <div class="card-body">
+        <form method="GET" action="{{ url_for('reports.audit_logs') }}">
+            <div class="row">
+                <div class="col-md-4 mb-3">
+                    <label class="form-label">Usuário</label>
+                    <select name="user_id" class="form-select">
+                        <option value="">Todos os Usuários</option>
+                        {% for user in users %}
+                        <option value="{{ user.id }}" {% if filters.user_id == user.id %}selected{% endif %}>
+                            {{ user.username }} ({{ user.full_name }})
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-4 mb-3">
+                    <label class="form-label">Ação</label>
+                    <select name="action" class="form-select">
+                        <option value="">Todas as Ações</option>
+                        {% for action in actions %}
+                        <option value="{{ action }}" {% if filters.action == action %}selected{% endif %}>
+                            {{ action|capitalize }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-4 mb-3">
+                    <label class="form-label">Tabela</label>
+                    <select name="table_name" class="form-select">
+                        <option value="">Todas as Tabelas</option>
+                        {% for table in tables %}
+                        <option value="{{ table }}" {% if filters.table_name == table %}selected{% endif %}>
+                            {{ table|capitalize }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">Data Inicial</label>
+                    <input type="date" name="start_date" class="form-control" value="{{ filters.start_date.strftime('%Y-%m-%d') if filters.start_date }}">
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">Data Final</label>
+                    <input type="date" name="end_date" class="form-control" value="{{ filters.end_date.strftime('%Y-%m-%d') if filters.end_date }}">
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-12 text-end">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-search me-1"></i>Filtrar
+                    </button>
+                    <a href="{{ url_for('reports.audit_logs') }}" class="btn btn-secondary">
+                        <i class="fas fa-sync me-1"></i>Limpar Filtros
+                    </a>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Audit Logs Card -->
+<div class="card shadow mb-4">
+    <div class="card-header py-3 d-flex justify-content-between align-items-center">
+        <h6 class="m-0 font-weight-bold text-primary">Histórico de Ações</h6>
+        <span class="badge bg-info">{{ logs.total }} ações registradas</span>
+    </div>
+    <div class="card-body">
+        {% if logs.items %}
+        <div class="table-responsive">
+            <table class="table table-bordered table-hover datatable">
+                <thead>
+                    <tr>
+                        <th>Data/Hora</th>
+                        <th>Usuário</th>
+                        <th>Ação</th>
+                        <th>Tabela</th>
+                        <th>Registro ID</th>
+                        <th>Valores Antigos</th>
+                        <th>Valores Novos</th>
+                        <th>IP</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for log in logs.items %}
+                    <tr>
+                        <td>{{ log.timestamp.strftime('%d/%m/%Y %H:%M:%S') }}</td>
+                        <td>
+                            {% if log.user %}
+                                <a href="{{ url_for('auth.view_user', id=log.user.id) }}">{{ log.user.username }}</a>
+                            {% else %}
+                                <span class="text-muted">Sistema</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if log.action == 'create' %}
+                                <span class="badge bg-success">Criação</span>
+                            {% elif log.action == 'update' %}
+                                <span class="badge bg-warning">Atualização</span>
+                            {% elif log.action == 'delete' %}
+                                <span class="badge bg-danger">Exclusão</span>
+                            {% elif log.action == 'login' %}
+                                <span class="badge bg-info">Login</span>
+                            {% elif log.action == 'logout' %}
+                                <span class="badge bg-secondary">Logout</span>
+                            {% elif log.action == 'import' %}
+                                <span class="badge bg-primary">Importação</span>
+                            {% elif log.action == 'export' %}
+                                <span class="badge bg-primary">Exportação</span>
+                            {% elif log.action == 'report' %}
+                                <span class="badge bg-info">Relatório</span>
+                            {% elif log.action == 'cancel' %}
+                                <span class="badge bg-danger">Cancelamento</span>
+                            {% else %}
+                                <span class="badge bg-secondary">{{ log.action|capitalize }}</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ log.table_name|capitalize }}</td>
+                        <td>{{ log.row_id|default('-') }}</td>
+                        <td>
+                            {% if log.old_values %}
+                            <button class="btn btn-sm btn-outline-secondary" type="button" 
+                                    data-bs-toggle="popover" data-bs-html="true" title="Valores Antigos" 
+                                    data-bs-content="{{ log.old_values|replace(',', '<br>')| replace('=', ': ') }}">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                            {% else %}
+                            -
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if log.new_values %}
+                            <button class="btn btn-sm btn-outline-secondary" type="button" 
+                                    data-bs-toggle="popover" data-bs-html="true" title="Valores Novos" 
+                                    data-bs-content="{{ log.new_values|replace(',', '<br>')|replace('=', ': ') }}">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                            {% else %}
+                            -
+                            {% endif %}
+                        </td>
+                        <td>{{ log.ip_address|default('-') }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        
+        <!-- Pagination -->
+        <nav aria-label="Paginação de logs">
+            <ul class="pagination justify-content-center mt-4">
+                {% if logs.has_prev %}
+                <li class="page-item">
+                    <a class="page-link" href="{{ url_for('reports.audit_logs', page=logs.prev_num, **request.args) }}" tabindex="-1">Anterior</a>
+                </li>
+                {% else %}
+                <li class="page-item disabled">
+                    <a class="page-link" href="#" tabindex="-1">Anterior</a>
+                </li>
+                {% endif %}
+                
+                {% for page_num in logs.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2) %}
+                    {% if page_num %}
+                        {% if page_num == logs.page %}
+                        <li class="page-item active">
+                            <a class="page-link" href="#">{{ page_num }}</a>
+                        </li>
+                        {% else %}
+                        <li class="page-item">
+                            <a class="page-link" href="{{ url_for('reports.audit_logs', page=page_num, **request.args) }}">{{ page_num }}</a>
+                        </li>
+                        {% endif %}
+                    {% else %}
+                    <li class="page-item disabled">
+                        <a class="page-link" href="#">...</a>
+                    </li>
+                    {% endif %}
+                {% endfor %}
+                
+                {% if logs.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="{{ url_for('reports.audit_logs', page=logs.next_num, **request.args) }}">Próximo</a>
+                </li>
+                {% else %}
+                <li class="page-item disabled">
+                    <a class="page-link" href="#">Próximo</a>
+                </li>
+                {% endif %}
+            </ul>
+        </nav>
+        {% else %}
+        <div class="text-center py-4">
+            <i class="fas fa-search fa-4x text-muted mb-3"></i>
+            <p class="lead">Nenhum log de auditoria encontrado com os filtros aplicados.</p>
+            <a href="{{ url_for('reports.audit_logs') }}" class="btn btn-primary">
+                <i class="fas fa-sync me-1"></i>Limpar Filtros
+            </a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Security Notice -->
+<div class="alert alert-warning">
+    <div class="d-flex">
+        <div class="me-3">
+            <i class="fas fa-shield-alt fa-2x"></i>
+        </div>
+        <div>
+            <h5 class="alert-heading">Aviso de Segurança</h5>
+            <p class="mb-0">
+                Os logs de auditoria são mantidos para garantir a rastreabilidade e segurança do sistema.
+                Todas as ações importantes são registradas com o usuário responsável, data, hora e endereço IP.
+                Este histórico não pode ser modificado ou excluído.
+            </p>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Ativar popovers do Bootstrap
+        const popoverTriggerList = document.querySelectorAll('[data-bs-toggle="popover"]');
+        const popoverList = [...popoverTriggerList].map(popoverTriggerEl => {
+            return new bootstrap.Popover(popoverTriggerEl, {
+                placement: 'auto',
+                trigger: 'focus'
+            });
+        });
+        
+        // Tabela com ordenação
+        const table = document.querySelector('.datatable');
+        if (table) {
+            new DataTable(table, {
+                order: [[0, 'desc']], // Ordenar por data, mais recentes primeiro
+                pageLength: 25,
+                language: {
+                    url: '//cdn.datatables.net/plug-ins/1.13.4/i18n/pt-BR.json'
+                }
+            });
+        }
+    });
+</script>
+{% endblock %}

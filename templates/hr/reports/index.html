@@ -1,0 +1,295 @@
+{% extends "base.html" %}
+
+{% block title %}Relatórios de RH - Recursos Humanos{% endblock %}
+
+{% block content %}
+<div class="d-sm-flex align-items-center justify-content-between mb-4">
+    <h1 class="h3 mb-0 text-light">
+        <i class="fas fa-file-alt me-2"></i>Relatórios de RH
+    </h1>
+    <div>
+        <button type="button" class="btn btn-primary btn-sm me-2" data-bs-toggle="modal" data-bs-target="#scheduleReportModal">
+            <i class="fas fa-calendar fa-sm text-white-50 me-1"></i> Agendar Relatório
+        </button>
+        <div class="btn-group">
+            <button type="button" class="btn btn-success btn-sm dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+                <i class="fas fa-download fa-sm text-white-50 me-1"></i> Exportar
+            </button>
+            <ul class="dropdown-menu">
+                <li><a class="dropdown-item" href="#">Excel</a></li>
+                <li><a class="dropdown-item" href="#">PDF</a></li>
+                <li><a class="dropdown-item" href="#">CSV</a></li>
+            </ul>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para agendar relatório -->
+<div class="modal fade" id="scheduleReportModal" tabindex="-1" aria-labelledby="scheduleReportModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="scheduleReportModalLabel">Agendar Relatório</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form>
+                    <div class="mb-3">
+                        <label class="form-label">Tipo de Relatório</label>
+                        <select class="form-select">
+                            <option>Folha de Pagamento</option>
+                            <option>Funcionários Ativos</option>
+                            <option>Férias Programadas</option>
+                            <option>Avaliações de Desempenho</option>
+                            <option>Indicadores de RH</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Frequência</label>
+                        <select class="form-select">
+                            <option>Única vez</option>
+                            <option>Diário</option>
+                            <option>Semanal</option>
+                            <option>Mensal</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Data de Início</label>
+                        <input type="date" class="form-control">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Destinatários</label>
+                        <input type="text" class="form-control" placeholder="Emails separados por vírgula">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Formato</label>
+                        <select class="form-select">
+                            <option>PDF</option>
+                            <option>Excel</option>
+                            <option>CSV</option>
+                        </select>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-primary">Agendar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Categorias de relatórios -->
+<div class="row">
+    <div class="col-md-4 mb-4">
+        <div class="card shadow h-100">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">
+                    <i class="fas fa-users me-2"></i>Funcionários
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="list-group list-group-flush">
+                    <a href="#" class="list-group-item list-group-item-action">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span>Lista de Funcionários</span>
+                            <i class="fas fa-file-alt"></i>
+                        </div>
+                    </a>
+                    <a href="#" class="list-group-item list-group-item-action">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span>Aniversariantes do Mês</span>
+                            <i class="fas fa-birthday-cake"></i>
+                        </div>
+                    </a>
+                    <a href="#" class="list-group-item list-group-item-action">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span>Estatísticas por Departamento</span>
+                            <i class="fas fa-chart-pie"></i>
+                        </div>
+                    </a>
+                    <a href="#" class="list-group-item list-group-item-action">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span>Tempo de Serviço</span>
+                            <i class="fas fa-hourglass-half"></i>
+                        </div>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4 mb-4">
+        <div class="card shadow h-100">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">
+                    <i class="fas fa-money-check-alt me-2"></i>Folha & Benefícios
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="list-group list-group-flush">
+                    <a href="#" class="list-group-item list-group-item-action">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span>Folha de Pagamento</span>
+                            <i class="fas fa-file-invoice-dollar"></i>
+                        </div>
+                    </a>
+                    <a href="#" class="list-group-item list-group-item-action">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span>Remuneração por Cargo</span>
+                            <i class="fas fa-chart-bar"></i>
+                        </div>
+                    </a>
+                    <a href="#" class="list-group-item list-group-item-action">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span>Horas Extras</span>
+                            <i class="fas fa-clock"></i>
+                        </div>
+                    </a>
+                    <a href="#" class="list-group-item list-group-item-action">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span>Benefícios Concedidos</span>
+                            <i class="fas fa-gift"></i>
+                        </div>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4 mb-4">
+        <div class="card shadow h-100">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">
+                    <i class="fas fa-chart-line me-2"></i>Desempenho & Presença
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="list-group list-group-flush">
+                    <a href="#" class="list-group-item list-group-item-action">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span>Avaliações de Desempenho</span>
+                            <i class="fas fa-star"></i>
+                        </div>
+                    </a>
+                    <a href="#" class="list-group-item list-group-item-action">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span>Absenteísmo</span>
+                            <i class="fas fa-user-times"></i>
+                        </div>
+                    </a>
+                    <a href="#" class="list-group-item list-group-item-action">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span>Férias Programadas</span>
+                            <i class="fas fa-umbrella-beach"></i>
+                        </div>
+                    </a>
+                    <a href="#" class="list-group-item list-group-item-action">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span>Atestados Médicos</span>
+                            <i class="fas fa-notes-medical"></i>
+                        </div>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Relatórios recentes -->
+<div class="card shadow mb-4">
+    <div class="card-header py-3">
+        <h6 class="m-0 font-weight-bold text-primary">Relatórios Recentes</h6>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-bordered table-hover" id="recentReportsTable">
+                <thead>
+                    <tr>
+                        <th>Título</th>
+                        <th>Tipo</th>
+                        <th>Gerado em</th>
+                        <th>Tamanho</th>
+                        <th>Gerado por</th>
+                        <th>Ações</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Funcionários Ativos - Maio 2025</td>
+                        <td><span class="badge bg-primary">Funcionários</span></td>
+                        <td>15/05/2025 14:30</td>
+                        <td>256 KB</td>
+                        <td>Admin</td>
+                        <td>
+                            <div class="btn-group">
+                                <a href="#" class="btn btn-sm btn-info"><i class="fas fa-eye"></i></a>
+                                <a href="#" class="btn btn-sm btn-success"><i class="fas fa-download"></i></a>
+                                <a href="#" class="btn btn-sm btn-danger"><i class="fas fa-trash"></i></a>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>Folha de Pagamento - Abril 2025</td>
+                        <td><span class="badge bg-success">Folha</span></td>
+                        <td>05/05/2025 10:15</td>
+                        <td>1.2 MB</td>
+                        <td>Admin</td>
+                        <td>
+                            <div class="btn-group">
+                                <a href="#" class="btn btn-sm btn-info"><i class="fas fa-eye"></i></a>
+                                <a href="#" class="btn btn-sm btn-success"><i class="fas fa-download"></i></a>
+                                <a href="#" class="btn btn-sm btn-danger"><i class="fas fa-trash"></i></a>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>Programação de Férias - Q2 2025</td>
+                        <td><span class="badge bg-warning">Férias</span></td>
+                        <td>30/04/2025 09:45</td>
+                        <td>458 KB</td>
+                        <td>Admin</td>
+                        <td>
+                            <div class="btn-group">
+                                <a href="#" class="btn btn-sm btn-info"><i class="fas fa-eye"></i></a>
+                                <a href="#" class="btn btn-sm btn-success"><i class="fas fa-download"></i></a>
+                                <a href="#" class="btn btn-sm btn-danger"><i class="fas fa-trash"></i></a>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>Indicadores de Desempenho - Q1 2025</td>
+                        <td><span class="badge bg-info">Desempenho</span></td>
+                        <td>15/04/2025 15:20</td>
+                        <td>890 KB</td>
+                        <td>Admin</td>
+                        <td>
+                            <div class="btn-group">
+                                <a href="#" class="btn btn-sm btn-info"><i class="fas fa-eye"></i></a>
+                                <a href="#" class="btn btn-sm btn-success"><i class="fas fa-download"></i></a>
+                                <a href="#" class="btn btn-sm btn-danger"><i class="fas fa-trash"></i></a>
+                            </div>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    $(document).ready(function() {
+        // Inicializa o DataTable
+        $('#recentReportsTable').DataTable({
+            "paging": false,
+            "searching": false,
+            "info": false,
+            "language": {
+                "url": "//cdn.datatables.net/plug-ins/1.10.25/i18n/Portuguese-Brasil.json"
+            }
+        });
+    });
+</script>
+{% endblock %}

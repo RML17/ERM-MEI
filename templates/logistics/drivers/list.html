@@ -1,0 +1,86 @@
+{% extends "base.html" %}
+
+{% block title %}Motoristas - Sistema de Gestão Empresarial{% endblock %}
+
+{% block content %}
+<div class="d-sm-flex align-items-center justify-content-between mb-4">
+    <h1 class="h3 mb-0 text-light">
+        <i class="fas fa-user-tie me-2"></i>Equipe de Entrega
+    </h1>
+    <a href="{{ url_for('logistics.create_driver') }}" class="btn btn-primary btn-sm">
+        <i class="fas fa-plus fa-sm text-white-50 me-1"></i> Novo Motorista
+    </a>
+</div>
+
+<div class="card shadow mb-4">
+    <div class="card-header py-3">
+        <h6 class="m-0 font-weight-bold text-primary">Lista de Motoristas</h6>
+    </div>
+    <div class="card-body">
+        {% if drivers %}
+            <div class="table-responsive">
+                <table class="table table-striped" id="motoristasTable">
+                    <thead>
+                        <tr>
+                            <th>Nome</th>
+                            <th>CPF</th>
+                            <th>CNH</th>
+                            <th>Categoria</th>
+                            <th>Vencimento</th>
+                            <th>Telefone</th>
+                            <th>Status</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for driver in drivers %}
+                        <tr>
+                            <td><strong>{{ driver.name }}</strong></td>
+                            <td>{{ driver.cpf }}</td>
+                            <td>{{ driver.license_number }}</td>
+                            <td>
+                                <span class="badge bg-info">{{ driver.license_category }}</span>
+                            </td>
+                            <td>
+                                {{ driver.license_expiry.strftime('%d/%m/%Y') }}
+                                {% if driver.license_expiry < now().date() %}
+                                    <br><span class="badge bg-danger">Vencida</span>
+                                {% elif (driver.license_expiry - now().date()).days <= 30 %}
+                                    <br><span class="badge bg-warning">Vence em breve</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ driver.phone or '-' }}</td>
+                            <td>
+                                {% if driver.is_active %}
+                                    {% if driver.is_available %}
+                                        <span class="badge bg-success">Disponível</span>
+                                    {% else %}
+                                        <span class="badge bg-warning">Ocupado</span>
+                                    {% endif %}
+                                {% else %}
+                                    <span class="badge bg-danger">Inativo</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <a href="#" class="btn btn-outline-primary btn-sm" title="Editar">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <div class="text-center py-5">
+                <i class="fas fa-user-tie fa-3x text-gray-300 mb-3"></i>
+                <h5 class="text-muted">Nenhum motorista cadastrado</h5>
+                <p class="text-muted">Gerencie sua equipe de entrega</p>
+                <a href="{{ url_for('logistics.create_driver') }}" class="btn btn-primary">
+                    <i class="fas fa-plus me-1"></i> Cadastrar Motorista
+                </a>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

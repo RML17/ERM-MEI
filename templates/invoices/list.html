@@ -1,0 +1,188 @@
+{% extends "base.html" %}
+
+{% block title %}Notas Fiscais - Sistema de Gestão Financeira{% endblock %}
+
+{% block content %}
+<div class="d-sm-flex align-items-center justify-content-between mb-4">
+    <h1 class="h3 mb-0 text-light">Notas Fiscais</h1>
+    <div>
+        <a href="{{ url_for('invoices.import_xml') }}" class="btn btn-info btn-sm me-2">
+            <i class="fas fa-file-import me-1"></i>Importar XML
+        </a>
+        <a href="{{ url_for('invoices.create') }}" class="btn btn-primary btn-sm">
+            <i class="fas fa-plus me-1"></i>Nova Nota
+        </a>
+    </div>
+</div>
+
+<!-- Search Card -->
+<div class="card shadow mb-4">
+    <div class="card-header py-3">
+        <h6 class="m-0 font-weight-bold text-primary">Filtrar Notas Fiscais</h6>
+    </div>
+    <div class="card-body">
+        <form method="GET" action="{{ url_for('invoices.index') }}">
+            <div class="row">
+                <div class="col-md-3 mb-3">
+                    <label for="{{ form.invoice_number.id }}" class="form-label">Número da Nota</label>
+                    {{ form.invoice_number(class="form-control") }}
+                </div>
+                <div class="col-md-3 mb-3">
+                    <label for="{{ form.type.id }}" class="form-label">Tipo</label>
+                    {{ form.type(class="form-select") }}
+                </div>
+                <div class="col-md-3 mb-3">
+                    <label for="{{ form.status.id }}" class="form-label">Status</label>
+                    {{ form.status(class="form-select") }}
+                </div>
+                <div class="col-md-3 mb-3">
+                    <label for="{{ form.start_date.id }}" class="form-label">Data Inicial</label>
+                    {{ form.start_date(class="form-control", type="date") }}
+                </div>
+                <div class="col-md-3 mb-3">
+                    <label for="{{ form.end_date.id }}" class="form-label">Data Final</label>
+                    {{ form.end_date(class="form-control", type="date") }}
+                </div>
+                <div class="col-md-3 d-flex align-items-end">
+                    {{ form.submit(class="btn btn-primary w-100") }}
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Invoices Card -->
+<div class="card shadow mb-4">
+    <div class="card-header py-3 d-flex justify-content-between align-items-center">
+        <h6 class="m-0 font-weight-bold text-primary">Lista de Notas Fiscais</h6>
+        <span class="badge bg-info">{{ invoices.total }} notas encontradas</span>
+    </div>
+    <div class="card-body">
+        {% if invoices.items %}
+        <div class="table-responsive">
+            <table class="table table-bordered table-hover invoice-table datatable">
+                <thead>
+                    <tr>
+                        <th>Número</th>
+                        <th>Série</th>
+                        <th>Tipo</th>
+                        <th>Status</th>
+                        <th>Data Emissão</th>
+                        <th>Cliente/Fornecedor</th>
+                        <th>Valor Total</th>
+                        <th>Ações</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for invoice in invoices.items %}
+                    <tr>
+                        <td>{{ invoice.invoice_number }}</td>
+                        <td>{{ invoice.series }}</td>
+                        <td>
+                            {% if invoice.type.value == 'Entrada' %}
+                            <span class="badge bg-info">{{ invoice.type.value }}</span>
+                            {% else %}
+                            <span class="badge bg-success">{{ invoice.type.value }}</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if invoice.status.value == 'Aprovada' %}
+                            <span class="badge bg-success">{{ invoice.status.value }}</span>
+                            {% elif invoice.status.value == 'Emitida' %}
+                            <span class="badge bg-info">{{ invoice.status.value }}</span>
+                            {% elif invoice.status.value == 'Pendente' %}
+                            <span class="badge bg-warning">{{ invoice.status.value }}</span>
+                            {% elif invoice.status.value == 'Cancelada' %}
+                            <span class="badge bg-danger">{{ invoice.status.value }}</span>
+                            {% else %}
+                            <span class="badge bg-secondary">{{ invoice.status.value }}</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ invoice.issue_date.strftime('%d/%m/%Y') }}</td>
+                        <td>
+                            {% if invoice.customer %}
+                            {{ invoice.customer.name }}
+                            {% elif invoice.supplier %}
+                            {{ invoice.supplier.name }}
+                            {% else %}
+                            -
+                            {% endif %}
+                        </td>
+                        <td>R$ {{ "%.2f"|format(invoice.total_value|float)|replace('.', ',') }}</td>
+                        <td class="text-center">
+                            <div class="btn-group" role="group">
+                                <a href="{{ url_for('invoices.view', id=invoice.id) }}" class="btn btn-sm btn-info" title="Visualizar">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                                {% if invoice.status.value in ['Rascunho', 'Pendente'] %}
+                                <a href="{{ url_for('invoices.edit', id=invoice.id) }}" class="btn btn-sm btn-warning" title="Editar">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                                {% endif %}
+                                {% if invoice.status.value in ['Emitida', 'Aprovada'] %}
+                                <a href="{{ url_for('invoices.export_xml', id=invoice.id) }}" class="btn btn-sm btn-success" title="Exportar XML">
+                                    <i class="fas fa-file-export"></i>
+                                </a>
+                                {% endif %}
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        
+        <!-- Pagination -->
+        <nav aria-label="Paginação de notas fiscais">
+            <ul class="pagination justify-content-center mt-4">
+                {% if invoices.has_prev %}
+                <li class="page-item">
+                    <a class="page-link" href="{{ url_for('invoices.index', page=invoices.prev_num, **request.args) }}" tabindex="-1">Anterior</a>
+                </li>
+                {% else %}
+                <li class="page-item disabled">
+                    <a class="page-link" href="#" tabindex="-1">Anterior</a>
+                </li>
+                {% endif %}
+                
+                {% for page_num in invoices.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2) %}
+                    {% if page_num %}
+                        {% if page_num == invoices.page %}
+                        <li class="page-item active">
+                            <a class="page-link" href="#">{{ page_num }}</a>
+                        </li>
+                        {% else %}
+                        <li class="page-item">
+                            <a class="page-link" href="{{ url_for('invoices.index', page=page_num, **request.args) }}">{{ page_num }}</a>
+                        </li>
+                        {% endif %}
+                    {% else %}
+                    <li class="page-item disabled">
+                        <a class="page-link" href="#">...</a>
+                    </li>
+                    {% endif %}
+                {% endfor %}
+                
+                {% if invoices.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="{{ url_for('invoices.index', page=invoices.next_num, **request.args) }}">Próximo</a>
+                </li>
+                {% else %}
+                <li class="page-item disabled">
+                    <a class="page-link" href="#">Próximo</a>
+                </li>
+                {% endif %}
+            </ul>
+        </nav>
+        {% else %}
+        <div class="text-center py-4">
+            <i class="fas fa-file-invoice fa-4x text-muted mb-3"></i>
+            <p class="lead">Nenhuma nota fiscal encontrada.</p>
+            <a href="{{ url_for('invoices.create') }}" class="btn btn-primary">
+                <i class="fas fa-plus me-1"></i>Criar Nova Nota
+            </a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,343 @@
+{% extends "base.html" %}
+
+{% block title %}Sistema de Impostos - Dashboard{% endblock %}
+
+{% block content %}
+<div class="d-sm-flex align-items-center justify-content-between mb-4">
+    <h1 class="h3 mb-0 text-light">
+        <i class="fas fa-calculator me-2"></i>Sistema de Impostos
+    </h1>
+</div>
+
+<!-- Cards de resumo -->
+<div class="row">
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-primary shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                            ICMS Estados
+                        </div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">27 Estados</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-map-marked-alt fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-success shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                            Tipos de Impostos
+                        </div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">5 Impostos</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-percent fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-info shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
+                            Simulações
+                        </div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">Disponível</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-chart-line fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-warning shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+                            Calculadora
+                        </div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">Automática</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-calculator fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Calculadora de Impostos -->
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">
+                    <i class="fas fa-calculator me-2"></i>Calculadora de Impostos
+                </h6>
+            </div>
+            <div class="card-body">
+                <p class="mb-4">Calcule impostos automaticamente baseado na origem e destino da operação.</p>
+                
+                <form id="taxCalculatorForm">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Valor Base (R$)</label>
+                            <input type="number" class="form-control" id="baseValue" step="0.01" min="0" placeholder="1000.00">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Estado de Origem</label>
+                            <select class="form-select" id="originState">
+                                <option value="SP">São Paulo</option>
+                                <option value="RJ">Rio de Janeiro</option>
+                                <option value="MG">Minas Gerais</option>
+                                <option value="RS">Rio Grande do Sul</option>
+                                <option value="PR">Paraná</option>
+                                <option value="SC">Santa Catarina</option>
+                                <option value="BA">Bahia</option>
+                                <option value="GO">Goiás</option>
+                                <option value="PE">Pernambuco</option>
+                                <option value="CE">Ceará</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Estado de Destino</label>
+                            <select class="form-select" id="destinationState">
+                                <option value="SP">São Paulo</option>
+                                <option value="RJ">Rio de Janeiro</option>
+                                <option value="MG">Minas Gerais</option>
+                                <option value="RS">Rio Grande do Sul</option>
+                                <option value="PR">Paraná</option>
+                                <option value="SC">Santa Catarina</option>
+                                <option value="BA">Bahia</option>
+                                <option value="GO">Goiás</option>
+                                <option value="PE">Pernambuco</option>
+                                <option value="CE">Ceará</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Categoria do Produto</label>
+                            <select class="form-select" id="productCategory">
+                                <option value="default">Padrão</option>
+                                <option value="electronics">Eletrônicos</option>
+                                <option value="food">Alimentos</option>
+                                <option value="medicine">Medicamentos</option>
+                                <option value="books">Livros</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <button type="button" class="btn btn-primary" onclick="calculateTaxes()">
+                        <i class="fas fa-calculator me-1"></i> Calcular Impostos
+                    </button>
+                </form>
+                
+                <div id="taxResult" class="mt-4" style="display: none;">
+                    <h6 class="text-primary">Resultado do Cálculo:</h6>
+                    <div id="taxDetails"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-success">
+                    <i class="fas fa-chart-bar me-2"></i>Ferramentas Avançadas
+                </h6>
+            </div>
+            <div class="card-body">
+                <p class="mb-4">Acesse ferramentas avançadas para análise tributária.</p>
+                
+                <a href="{{ url_for('taxes.simulate') }}" class="btn btn-success btn-block mb-3 d-block text-center">
+                    <i class="fas fa-chart-line me-1"></i> Simulador de Cenários
+                </a>
+                
+                <a href="{{ url_for('taxes.regulations') }}" class="btn btn-info btn-block d-block text-center">
+                    <i class="fas fa-book me-1"></i> Regulamentações Fiscais
+                </a>
+            </div>
+        </div>
+
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-warning">
+                    <i class="fas fa-lightbulb me-2"></i>Dicas Fiscais
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="small">
+                    <p><strong>💡 ICMS Interestadual:</strong> Operações entre Norte/Nordeste e Sul/Sudeste têm alíquota de 7%.</p>
+                    <p><strong>💡 IPI:</strong> Medicamentos e livros são isentos de IPI.</p>
+                    <p><strong>💡 ISS:</strong> Varia por município, entre 2% e 5%.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Resumo de Alíquotas -->
+<div class="card shadow mb-4">
+    <div class="card-header py-3">
+        <h6 class="m-0 font-weight-bold text-primary">
+            <i class="fas fa-table me-2"></i>Resumo de Alíquotas Principais
+        </h6>
+    </div>
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-3">
+                <div class="card border-left-primary">
+                    <div class="card-body">
+                        <h6 class="text-primary">ICMS</h6>
+                        <p class="mb-1">SP/RJ/MG: <strong>18%</strong></p>
+                        <p class="mb-1">Sul: <strong>17-18%</strong></p>
+                        <p class="mb-0">Interestadual: <strong>7-12%</strong></p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-3">
+                <div class="card border-left-success">
+                    <div class="card-body">
+                        <h6 class="text-success">IPI</h6>
+                        <p class="mb-1">Padrão: <strong>10%</strong></p>
+                        <p class="mb-1">Eletrônicos: <strong>15%</strong></p>
+                        <p class="mb-0">Alimentos: <strong>5%</strong></p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-3">
+                <div class="card border-left-info">
+                    <div class="card-body">
+                        <h6 class="text-info">PIS/COFINS</h6>
+                        <p class="mb-1">PIS: <strong>1,65%</strong></p>
+                        <p class="mb-1">COFINS: <strong>7,6%</strong></p>
+                        <p class="mb-0">Total: <strong>9,25%</strong></p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-3">
+                <div class="card border-left-warning">
+                    <div class="card-body">
+                        <h6 class="text-warning">ISS</h6>
+                        <p class="mb-1">Mínimo: <strong>2%</strong></p>
+                        <p class="mb-1">Máximo: <strong>5%</strong></p>
+                        <p class="mb-0">Padrão: <strong>5%</strong></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function calculateTaxes() {
+    const baseValue = parseFloat($('#baseValue').val());
+    const originState = $('#originState').val();
+    const destinationState = $('#destinationState').val();
+    const category = $('#productCategory').val();
+    
+    if (!baseValue || baseValue <= 0) {
+        alert('Por favor, insira um valor base válido.');
+        return;
+    }
+    
+    const data = {
+        value: baseValue,
+        origin_state: originState,
+        destination_state: destinationState,
+        category: category,
+        type: 'product'
+    };
+    
+    $.ajax({
+        url: '{{ url_for("taxes.api_calculate_item") }}',
+        method: 'POST',
+        contentType: 'application/json',
+        data: JSON.stringify(data),
+        success: function(result) {
+            displayTaxResult(result);
+            $('#taxResult').show();
+        },
+        error: function(xhr) {
+            alert('Erro ao calcular impostos: ' + (xhr.responseJSON?.error || 'Erro desconhecido'));
+        }
+    });
+}
+
+function displayTaxResult(result) {
+    let html = `
+        <div class="card">
+            <div class="card-body">
+                <h6 class="card-title text-primary">Resumo dos Impostos Calculados</h6>
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="border-left-primary p-3">
+                            <p class="mb-2"><strong>💰 Valor Base:</strong> R$ ${result.summary.base_value.toFixed(2)}</p>
+                            <p class="mb-2"><strong>📊 Total de Impostos:</strong> <span class="text-danger">R$ ${result.summary.total_taxes.toFixed(2)}</span></p>
+                            <p class="mb-2"><strong>💵 Valor Final:</strong> <span class="text-success">R$ ${result.summary.final_value.toFixed(2)}</span></p>
+                            <p class="mb-0"><strong>📈 % de Impostos:</strong> ${result.summary.tax_percentage.toFixed(2)}%</p>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <h6 class="text-info">Detalhamento por Imposto:</h6>
+                        <div class="border-left-info p-3">
+    `;
+    
+    if (result.icms) {
+        html += `<p class="mb-1">🏛️ <strong>ICMS:</strong> R$ ${result.icms.value.toFixed(2)} (${(result.icms.rate * 100).toFixed(1)}%)</p>`;
+    }
+    if (result.ipi) {
+        html += `<p class="mb-1">🏭 <strong>IPI:</strong> R$ ${result.ipi.value.toFixed(2)} (${(result.ipi.rate * 100).toFixed(1)}%)</p>`;
+    }
+    if (result.pis) {
+        html += `<p class="mb-1">🇧🇷 <strong>PIS:</strong> R$ ${result.pis.value.toFixed(2)} (${(result.pis.rate * 100).toFixed(2)}%)</p>`;
+    }
+    if (result.cofins) {
+        html += `<p class="mb-1">🇧🇷 <strong>COFINS:</strong> R$ ${result.cofins.value.toFixed(2)} (${(result.cofins.rate * 100).toFixed(2)}%)</p>`;
+    }
+    
+    html += `
+                        </div>
+                    </div>
+                </div>
+                <div class="mt-3">
+                    <div class="progress">
+                        <div class="progress-bar bg-warning" role="progressbar" style="width: ${result.summary.tax_percentage}%" aria-valuenow="${result.summary.tax_percentage}" aria-valuemin="0" aria-valuemax="100">
+                            ${result.summary.tax_percentage.toFixed(1)}% Impostos
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    $('#taxDetails').html(html);
+}
+</script>
+{% endblock %}

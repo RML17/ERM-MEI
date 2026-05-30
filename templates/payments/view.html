@@ -1,0 +1,164 @@
+{% extends "base.html" %}
+
+{% block title %}Pagamento #{{ payment.id }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+        <h1 class="h2">Pagamento #{{ payment.id }}</h1>
+        <div class="btn-toolbar mb-2 mb-md-0">
+            <a href="{{ url_for('payments.index') }}" class="btn btn-secondary me-2">
+                <i class="fas fa-arrow-left"></i> Voltar
+            </a>
+            {% if payment.status != 'PAID' and payment.status != 'CANCELLED' %}
+            <a href="{{ url_for('payments.edit', id=payment.id) }}" class="btn btn-warning me-2">
+                <i class="fas fa-edit"></i> Editar
+            </a>
+            {% endif %}
+        </div>
+    </div>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Detalhes do Pagamento</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <strong>Nota Fiscal:</strong><br>
+                            {% if payment.invoice %}
+                                <a href="{{ url_for('invoices.view', id=payment.invoice.id) }}">
+                                    {{ payment.invoice.invoice_number }}
+                                </a>
+                            {% else %}
+                                <span class="text-muted">N/A</span>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-6">
+                            <strong>Método de Pagamento:</strong><br>
+                            {{ payment.payment_method.value if payment.payment_method else 'N/A' }}
+                        </div>
+                    </div>
+                    
+                    <hr>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <strong>Valor Total:</strong><br>
+                            R$ {{ "%.2f"|format(payment.amount) }}
+                        </div>
+                        <div class="col-md-6">
+                            <strong>Valor Pago:</strong><br>
+                            R$ {{ "%.2f"|format(payment.paid_amount or 0) }}
+                        </div>
+                    </div>
+                    
+                    <hr>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <strong>Data de Vencimento:</strong><br>
+                            {{ payment.due_date.strftime('%d/%m/%Y') if payment.due_date else 'N/A' }}
+                        </div>
+                        <div class="col-md-6">
+                            <strong>Data de Pagamento:</strong><br>
+                            {% if payment.payment_date %}
+                                {{ payment.payment_date.strftime('%d/%m/%Y') }}
+                            {% else %}
+                                <span class="text-muted">Não pago</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    {% if payment.document_number %}
+                    <hr>
+                    <div class="row">
+                        <div class="col-12">
+                            <strong>Número do Documento:</strong><br>
+                            {{ payment.document_number }}
+                        </div>
+                    </div>
+                    {% endif %}
+                    
+                    {% if payment.notes %}
+                    <hr>
+                    <div class="row">
+                        <div class="col-12">
+                            <strong>Observações:</strong><br>
+                            {{ payment.notes }}
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-4">
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="card-title mb-0">Status</h6>
+                </div>
+                <div class="card-body">
+                    <span class="badge bg-{{ 'success' if payment.status.value == 'PAID' else 'warning' if payment.status.value == 'PARTIAL' else 'danger' if payment.status.value == 'OVERDUE' else 'secondary' }} fs-6">
+                        {% if payment.status.value == 'PAID' %}
+                            Pago
+                        {% elif payment.status.value == 'PARTIAL' %}
+                            Parcial
+                        {% elif payment.status.value == 'PENDING' %}
+                            Pendente
+                        {% elif payment.status.value == 'OVERDUE' %}
+                            Vencido
+                        {% else %}
+                            {{ payment.status.value }}
+                        {% endif %}
+                    </span>
+                    
+                    {% if payment.status.value != 'PAID' and payment.status.value != 'CANCELLED' %}
+                    <hr>
+                    <h6>Registrar Pagamento</h6>
+                    <form method="POST" action="{{ url_for('payments.record_payment', id=payment.id) }}">
+                        <div class="mb-3">
+                            <label class="form-label">Valor Pago</label>
+                            <input type="number" name="paid_amount" class="form-control" step="0.01" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Data do Pagamento</label>
+                            <input type="date" name="payment_date" class="form-control" value="{{ today }}" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">ID da Transação</label>
+                            <input type="text" name="transaction_id" class="form-control">
+                        </div>
+                        <button type="submit" class="btn btn-success btn-sm">
+                            <i class="fas fa-check"></i> Registrar
+                        </button>
+                    </form>
+                    {% endif %}
+                    
+                    {% if payment.status.value != 'CANCELLED' %}
+                    <hr>
+                    <form method="POST" action="{{ url_for('payments.cancel', id=payment.id) }}" onsubmit="return confirm('Tem certeza que deseja cancelar este pagamento?')">
+                        <button type="submit" class="btn btn-danger btn-sm">
+                            <i class="fas fa-ban"></i> Cancelar Pagamento
+                        </button>
+                    </form>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

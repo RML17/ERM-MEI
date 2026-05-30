@@ -1,0 +1,238 @@
+{% extends "base.html" %}
+
+{% block title %}Folha de Pagamento - Recursos Humanos{% endblock %}
+
+{% block content %}
+<div class="d-sm-flex align-items-center justify-content-between mb-4">
+    <h1 class="h3 mb-0 text-light">
+        <i class="fas fa-money-check-alt me-2"></i>Folha de Pagamento
+    </h1>
+    <div>
+        <a href="{{ url_for('hr.calculate_payroll') }}" class="btn btn-primary btn-sm me-2">
+            <i class="fas fa-calculator fa-sm text-white-50 me-1"></i> Calcular Folha
+        </a>
+        <a href="#" class="btn btn-success btn-sm">
+            <i class="fas fa-file-excel fa-sm text-white-50 me-1"></i> Exportar
+        </a>
+    </div>
+</div>
+
+<!-- Períodos de folha recentes -->
+<div class="card shadow mb-4">
+    <div class="card-header py-3">
+        <h6 class="m-0 font-weight-bold text-primary">Períodos de Folha Recentes</h6>
+    </div>
+    <div class="card-body">
+        {% if recent_payrolls %}
+        <div class="table-responsive">
+            <table class="table table-bordered table-hover" id="folhaTable">
+                <thead>
+                    <tr>
+                        <th>Período</th>
+                        <th>Funcionários</th>
+                        <th>Total Bruto (R$)</th>
+                        <th>Total Líquido (R$)</th>
+                        <th>Ações</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for payroll in recent_payrolls %}
+                    <tr>
+                        <td>
+                            {{ payroll.period_start.strftime('%d/%m/%Y') }} a {{ payroll.period_end.strftime('%d/%m/%Y') }}
+                        </td>
+                        <td>{{ payroll.employee_count }}</td>
+                        <td>{{ "%.2f"|format(payroll.total_gross) }}</td>
+                        <td>{{ "%.2f"|format(payroll.total_net) }}</td>
+                        <td>
+                            <div class="btn-group">
+                                <a href="#" class="btn btn-sm btn-info">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                                <a href="#" class="btn btn-sm btn-success">
+                                    <i class="fas fa-file-pdf"></i>
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="text-center py-4">
+            <i class="fas fa-money-check-alt fa-5x mb-3 text-muted"></i>
+            <p class="lead text-muted">Nenhum período de folha de pagamento encontrado.</p>
+            <a href="{{ url_for('hr.calculate_payroll') }}" class="btn btn-primary mt-2">
+                <i class="fas fa-calculator me-1"></i> Calcular Primeira Folha
+            </a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Resumo de benefícios e descontos -->
+<div class="row">
+    <div class="col-md-6">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">Resumo de Benefícios</h6>
+            </div>
+            <div class="card-body">
+                <div class="chart-pie pt-4 pb-2">
+                    <canvas id="beneficiosChart"></canvas>
+                </div>
+                <div class="mt-4 text-center small">
+                    <span class="me-2">
+                        <i class="fas fa-circle text-primary"></i> Vale Transporte
+                    </span>
+                    <span class="me-2">
+                        <i class="fas fa-circle text-success"></i> Vale Refeição
+                    </span>
+                    <span class="me-2">
+                        <i class="fas fa-circle text-info"></i> Plano de Saúde
+                    </span>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">Resumo de Descontos</h6>
+            </div>
+            <div class="card-body">
+                <div class="chart-pie pt-4 pb-2">
+                    <canvas id="descontosChart"></canvas>
+                </div>
+                <div class="mt-4 text-center small">
+                    <span class="me-2">
+                        <i class="fas fa-circle text-danger"></i> INSS
+                    </span>
+                    <span class="me-2">
+                        <i class="fas fa-circle text-warning"></i> IRRF
+                    </span>
+                    <span class="me-2">
+                        <i class="fas fa-circle text-secondary"></i> Outros
+                    </span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Calendário de pagamentos -->
+<div class="card shadow mb-4">
+    <div class="card-header py-3">
+        <h6 class="m-0 font-weight-bold text-primary">Calendário de Pagamentos</h6>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-bordered">
+                <thead>
+                    <tr>
+                        <th>Tipo</th>
+                        <th>Data</th>
+                        <th>Descrição</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><span class="badge bg-success">Salário</span></td>
+                        <td>05/06/2025</td>
+                        <td>Pagamento de salário do mês de maio/2025</td>
+                    </tr>
+                    <tr>
+                        <td><span class="badge bg-info">Adiantamento</span></td>
+                        <td>20/05/2025</td>
+                        <td>Adiantamento de salário do mês de maio/2025</td>
+                    </tr>
+                    <tr>
+                        <td><span class="badge bg-primary">Benefícios</span></td>
+                        <td>02/06/2025</td>
+                        <td>Crédito de vale-refeição e vale-transporte</td>
+                    </tr>
+                    <tr>
+                        <td><span class="badge bg-warning">Férias</span></td>
+                        <td>10/07/2025</td>
+                        <td>Pagamento de férias para funcionários elegíveis</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+// Exemplo de dados para os gráficos
+$(document).ready(function() {
+    // Gráfico de benefícios
+    var beneficiosCtx = document.getElementById("beneficiosChart");
+    var beneficiosChart = new Chart(beneficiosCtx, {
+        type: 'doughnut',
+        data: {
+            labels: ["Vale Transporte", "Vale Refeição", "Plano de Saúde"],
+            datasets: [{
+                data: [35, 45, 20],
+                backgroundColor: ['#4e73df', '#1cc88a', '#36b9cc'],
+                hoverBackgroundColor: ['#2e59d9', '#17a673', '#2c9faf'],
+                hoverBorderColor: "rgba(234, 236, 244, 1)",
+            }],
+        },
+        options: {
+            maintainAspectRatio: false,
+            tooltips: {
+                backgroundColor: "rgb(255,255,255)",
+                bodyFontColor: "#858796",
+                borderColor: '#dddfeb',
+                borderWidth: 1,
+                xPadding: 15,
+                yPadding: 15,
+                displayColors: false,
+                caretPadding: 10,
+            },
+            legend: {
+                display: false
+            },
+            cutoutPercentage: 80,
+        },
+    });
+    
+    // Gráfico de descontos
+    var descontosCtx = document.getElementById("descontosChart");
+    var descontosChart = new Chart(descontosCtx, {
+        type: 'doughnut',
+        data: {
+            labels: ["INSS", "IRRF", "Outros"],
+            datasets: [{
+                data: [55, 30, 15],
+                backgroundColor: ['#e74a3b', '#f6c23e', '#858796'],
+                hoverBackgroundColor: ['#be2617', '#dda20a', '#60616f'],
+                hoverBorderColor: "rgba(234, 236, 244, 1)",
+            }],
+        },
+        options: {
+            maintainAspectRatio: false,
+            tooltips: {
+                backgroundColor: "rgb(255,255,255)",
+                bodyFontColor: "#858796",
+                borderColor: '#dddfeb',
+                borderWidth: 1,
+                xPadding: 15,
+                yPadding: 15,
+                displayColors: false,
+                caretPadding: 10,
+            },
+            legend: {
+                display: false
+            },
+            cutoutPercentage: 80,
+        },
+    });
+});
+</script>
+{% endblock %}

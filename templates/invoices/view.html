@@ -1,0 +1,346 @@
+{% extends "base.html" %}
+
+{% block title %}Nota Fiscal {{ invoice.invoice_number }} - Sistema de Gestão Financeira{% endblock %}
+
+{% block content %}
+<div class="d-sm-flex align-items-center justify-content-between mb-4">
+    <h1 class="h3 mb-0 text-light">Nota Fiscal #{{ invoice.invoice_number }}</h1>
+    <div class="btn-group">
+        <a href="{{ url_for('invoices.index') }}" class="btn btn-secondary btn-sm">
+            <i class="fas fa-arrow-left me-1"></i>Voltar para Lista
+        </a>
+        
+        {% if invoice.status.value in ['Rascunho', 'Pendente'] %}
+        <a href="{{ url_for('invoices.edit', id=invoice.id) }}" class="btn btn-warning btn-sm">
+            <i class="fas fa-edit me-1"></i>Editar
+        </a>
+        {% endif %}
+        
+        {% if invoice.status.value in ['Emitida', 'Aprovada'] %}
+        <a href="{{ url_for('invoices.export_xml', id=invoice.id) }}" class="btn btn-success btn-sm">
+            <i class="fas fa-file-export me-1"></i>Exportar XML
+        </a>
+        {% endif %}
+        
+        {% if invoice.status.value != 'Cancelada' %}
+        <button type="button" class="btn btn-danger btn-sm" data-bs-toggle="modal" data-bs-target="#cancelInvoiceModal">
+            <i class="fas fa-ban me-1"></i>Cancelar
+        </button>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Invoice Details Card -->
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3 d-flex justify-content-between align-items-center">
+                <h6 class="m-0 font-weight-bold text-primary">Informações da Nota Fiscal</h6>
+                <span class="badge {% if invoice.status.value == 'Rascunho' %}bg-secondary{% elif invoice.status.value == 'Pendente' %}bg-warning{% elif invoice.status.value == 'Emitida' %}bg-info{% elif invoice.status.value == 'Aprovada' %}bg-success{% else %}bg-danger{% endif %} px-3 py-2">
+                    {{ invoice.status.value }}
+                </span>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Número da Nota</label>
+                            <p>{{ invoice.invoice_number }}-{{ invoice.series }}</p>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Data de Emissão</label>
+                            <p>{{ invoice.issue_date.strftime('%d/%m/%Y') }}</p>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Data de Operação</label>
+                            <p>{{ invoice.operation_date.strftime('%d/%m/%Y') }}</p>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Tipo</label>
+                            <p>{{ invoice.type.value }}</p>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">
+                                {% if invoice.type.value == 'Entrada' %}
+                                Fornecedor
+                                {% else %}
+                                Cliente
+                                {% endif %}
+                            </label>
+                            <p>
+                                {% if invoice.type.value == 'Entrada' and invoice.supplier %}
+                                {{ invoice.supplier.name }}
+                                <br><small class="text-muted">CNPJ: {{ invoice.supplier.cnpj }}</small>
+                                {% elif invoice.type.value == 'Saída' and invoice.customer %}
+                                {{ invoice.customer.name }}
+                                <br><small class="text-muted">{{ invoice.customer.document_type }}: {{ invoice.customer.document }}</small>
+                                {% else %}
+                                -
+                                {% endif %}
+                            </p>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Criada por</label>
+                            <p>
+                                {% if invoice.created_by %}
+                                {{ invoice.created_by.full_name }}
+                                <br><small class="text-muted">{{ invoice.created_at.strftime('%d/%m/%Y %H:%M') }}</small>
+                                {% else %}
+                                -
+                                {% endif %}
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                
+                {% if invoice.notes %}
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Observações</label>
+                    <p>{{ invoice.notes }}</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        
+        <!-- Invoice Items Card -->
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">Itens da Nota</h6>
+            </div>
+            <div class="card-body">
+                {% if items %}
+                <div class="table-responsive">
+                    <table class="table table-bordered table-striped">
+                        <thead>
+                            <tr>
+                                <th>Produto</th>
+                                <th>Quantidade</th>
+                                <th>Preço Unit.</th>
+                                <th>Desconto</th>
+                                <th>Total</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in items %}
+                            <tr>
+                                <td>
+                                    {% if item.product %}
+                                    <strong>{{ item.product.name }}</strong>
+                                    <br><small class="text-muted">SKU: {{ item.product.sku }}</small>
+                                    {% else %}
+                                    Produto não encontrado
+                                    {% endif %}
+                                </td>
+                                <td>{{ "%.3f"|format(item.quantity|float)|replace('.', ',') }}</td>
+                                <td>R$ {{ "%.2f"|format(item.unit_price|float)|replace('.', ',') }}</td>
+                                <td>R$ {{ "%.2f"|format(item.discount|float)|replace('.', ',') }}</td>
+                                <td>R$ {{ "%.2f"|format(item.total|float)|replace('.', ',') }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                        <tfoot>
+                            <tr class="table-active">
+                                <td colspan="4" class="text-end fw-bold">Total de Produtos:</td>
+                                <td class="fw-bold">R$ {{ "%.2f"|format(invoice.total_products|float)|replace('.', ',') }}</td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+                {% else %}
+                <p class="text-center mb-0">Nenhum item na nota fiscal.</p>
+                {% endif %}
+            </div>
+        </div>
+        
+        <!-- Payments Card -->
+        <div class="card shadow mb-4">
+            <div class="card-header py-3 d-flex justify-content-between align-items-center">
+                <h6 class="m-0 font-weight-bold text-primary">Pagamentos</h6>
+                <a href="{{ url_for('payments.create') }}" class="btn btn-sm btn-primary">
+                    <i class="fas fa-plus me-1"></i>Novo Pagamento
+                </a>
+            </div>
+            <div class="card-body">
+                {% if payments %}
+                <div class="table-responsive">
+                    <table class="table table-bordered table-striped">
+                        <thead>
+                            <tr>
+                                <th>Método</th>
+                                <th>Vencimento</th>
+                                <th>Valor</th>
+                                <th>Status</th>
+                                <th>Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for payment in payments %}
+                            <tr>
+                                <td>{{ payment.payment_method.value }}</td>
+                                <td {% if payment.due_date < now.date() and payment.status.value in ['Pendente', 'Parcial'] %}class="text-danger"{% endif %}>
+                                    {{ payment.due_date.strftime('%d/%m/%Y') }}
+                                </td>
+                                <td>R$ {{ "%.2f"|format(payment.amount|float)|replace('.', ',') }}</td>
+                                <td>
+                                    {% if payment.status.value == 'Pago' %}
+                                    <span class="badge bg-success">{{ payment.status.value }}</span>
+                                    {% elif payment.status.value == 'Pendente' %}
+                                    <span class="badge bg-warning">{{ payment.status.value }}</span>
+                                    {% elif payment.status.value == 'Parcial' %}
+                                    <span class="badge bg-info">{{ payment.status.value }}</span>
+                                    {% elif payment.status.value == 'Vencido' %}
+                                    <span class="badge bg-danger">{{ payment.status.value }}</span>
+                                    {% else %}
+                                    <span class="badge bg-secondary">{{ payment.status.value }}</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <a href="{{ url_for('payments.view', id=payment.id) }}" class="btn btn-sm btn-info">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="text-center py-3">
+                    <p class="mb-3">Nenhum pagamento registrado para esta nota fiscal.</p>
+                    <a href="{{ url_for('payments.create') }}" class="btn btn-primary">
+                        <i class="fas fa-plus me-1"></i>Registrar Pagamento
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-4">
+        <!-- Totals Card -->
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">Resumo de Valores</h6>
+            </div>
+            <div class="card-body">
+                <div class="row mb-2">
+                    <div class="col-6">
+                        <p class="mb-0">Total de Produtos:</p>
+                    </div>
+                    <div class="col-6 text-end">
+                        <p class="mb-0">R$ {{ "%.2f"|format(invoice.total_products|float)|replace('.', ',') }}</p>
+                    </div>
+                </div>
+                <div class="row mb-2">
+                    <div class="col-6">
+                        <p class="mb-0">Total de Impostos:</p>
+                    </div>
+                    <div class="col-6 text-end">
+                        <p class="mb-0">R$ {{ "%.2f"|format(invoice.total_tax|float)|replace('.', ',') }}</p>
+                    </div>
+                </div>
+                <hr>
+                <div class="row">
+                    <div class="col-6">
+                        <p class="mb-0 h5">Valor Total:</p>
+                    </div>
+                    <div class="col-6 text-end">
+                        <p class="mb-0 h5">R$ {{ "%.2f"|format(invoice.total_value|float)|replace('.', ',') }}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Taxes Card -->
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">Detalhamento de Impostos</h6>
+            </div>
+            <div class="card-body">
+                {% if taxes %}
+                <div class="table-responsive">
+                    <table class="table table-bordered table-striped">
+                        <thead>
+                            <tr>
+                                <th>Imposto</th>
+                                <th>Alíquota</th>
+                                <th>Base</th>
+                                <th>Valor</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for tax in taxes %}
+                            <tr>
+                                <td>{{ tax.tax_type.value }}</td>
+                                <td>{{ "%.2f"|format(tax.tax_rate*100) }}%</td>
+                                <td>R$ {{ "%.2f"|format(tax.tax_base|float)|replace('.', ',') }}</td>
+                                <td>R$ {{ "%.2f"|format(tax.tax_value|float)|replace('.', ',') }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <p class="text-center mb-0">Não há impostos detalhados para esta nota.</p>
+                {% endif %}
+            </div>
+        </div>
+        
+        <!-- Actions Card -->
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">Ações</h6>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    {% if invoice.status.value in ['Rascunho', 'Pendente'] %}
+                    <a href="{{ url_for('invoices.edit', id=invoice.id) }}" class="btn btn-warning">
+                        <i class="fas fa-edit me-1"></i>Editar Nota
+                    </a>
+                    {% endif %}
+                    
+                    {% if invoice.status.value in ['Emitida', 'Aprovada'] %}
+                    <a href="{{ url_for('invoices.export_xml', id=invoice.id) }}" class="btn btn-success">
+                        <i class="fas fa-file-export me-1"></i>Exportar XML
+                    </a>
+                    {% endif %}
+                    
+                    {% if invoice.status.value != 'Cancelada' %}
+                    <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#cancelInvoiceModal">
+                        <i class="fas fa-ban me-1"></i>Cancelar Nota
+                    </button>
+                    {% endif %}
+                    
+                    <a href="{{ url_for('payments.create') }}" class="btn btn-primary">
+                        <i class="fas fa-plus me-1"></i>Registrar Pagamento
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Cancel Invoice Modal -->
+<div class="modal fade" id="cancelInvoiceModal" tabindex="-1" aria-labelledby="cancelInvoiceModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="cancelInvoiceModalLabel">Confirmar Cancelamento</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Tem certeza que deseja cancelar esta nota fiscal?</p>
+                <p class="text-danger">Esta ação não pode ser desfeita e pode afetar o estoque e relatórios financeiros.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Não, Voltar</button>
+                <form action="{{ url_for('invoices.cancel', id=invoice.id) }}" method="POST" class="d-inline">
+                    <button type="submit" class="btn btn-danger">Sim, Cancelar Nota</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

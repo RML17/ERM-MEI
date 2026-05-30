@@ -1,0 +1,231 @@
+{% extends "base.html" %}
+
+{% block title %}Pagamentos - Sistema de Gestão Financeira{% endblock %}
+
+{% block content %}
+<div class="d-sm-flex align-items-center justify-content-between mb-4">
+    <h1 class="h3 mb-0 text-light">
+        <i class="fas fa-money-bill-alt me-2"></i>Gerenciamento de Pagamentos
+    </h1>
+    <a href="{{ url_for('payments.create') }}" class="btn btn-primary btn-sm">
+        <i class="fas fa-plus fa-sm text-white-50 me-1"></i> Novo Pagamento
+    </a>
+</div>
+
+<div class="card shadow mb-4">
+    <div class="card-header py-3">
+        <h6 class="m-0 font-weight-bold text-primary">Filtrar Pagamentos</h6>
+    </div>
+    <div class="card-body">
+        <form method="GET" action="{{ url_for('payments.index') }}">
+            <div class="row">
+                <div class="col-md-3 mb-3">
+                    {{ form.invoice_number.label(class="form-label") }}
+                    {{ form.invoice_number(class="form-control") }}
+                </div>
+                <div class="col-md-3 mb-3">
+                    {{ form.start_due_date.label(class="form-label") }}
+                    {{ form.start_due_date(class="form-control", type="date") }}
+                </div>
+                <div class="col-md-3 mb-3">
+                    {{ form.end_due_date.label(class="form-label") }}
+                    {{ form.end_due_date(class="form-control", type="date") }}
+                </div>
+                <div class="col-md-3 mb-3">
+                    {{ form.payment_method.label(class="form-label") }}
+                    {{ form.payment_method(class="form-select") }}
+                </div>
+                <div class="col-md-3 mb-3">
+                    {{ form.status.label(class="form-label") }}
+                    {{ form.status(class="form-select") }}
+                </div>
+                <div class="col-md-3 d-flex align-items-end mb-3">
+                    <button type="submit" class="btn btn-primary me-2">
+                        <i class="fas fa-search fa-sm"></i> Filtrar
+                    </button>
+                    <a href="{{ url_for('payments.index') }}" class="btn btn-secondary">
+                        <i class="fas fa-sync-alt fa-sm"></i> Limpar
+                    </a>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="card shadow mb-4">
+    <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+        <h6 class="m-0 font-weight-bold text-primary">Lista de Pagamentos</h6>
+        <div class="dropdown no-arrow">
+            <a class="dropdown-toggle" href="#" role="button" id="dropdownMenuLink"
+                data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                <i class="fas fa-ellipsis-v fa-sm fa-fw text-gray-400"></i>
+            </a>
+            <div class="dropdown-menu dropdown-menu-right shadow animated--fade-in">
+                <div class="dropdown-header">Ações:</div>
+                <a class="dropdown-item" href="{{ url_for('payments.overdue') }}">
+                    <i class="fas fa-exclamation-triangle fa-sm fa-fw text-warning"></i> Ver Atrasados
+                </a>
+                <a class="dropdown-item" href="{{ url_for('reports.payments') }}">
+                    <i class="fas fa-file-alt fa-sm fa-fw text-info"></i> Gerar Relatório
+                </a>
+            </div>
+        </div>
+    </div>
+    <div class="card-body">
+        {% if payments.items %}
+        <div class="table-responsive">
+            <table class="table table-bordered table-hover" id="pagamentosTable">
+                <thead>
+                    <tr>
+                        <th>ID/Ref.</th>
+                        <th>Nota Fiscal</th>
+                        <th>Método</th>
+                        <th>Vencimento</th>
+                        <th>Valor (R$)</th>
+                        <th>Status</th>
+                        <th>Dt. Pagamento</th>
+                        <th>Ações</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for payment in payments.items %}
+                    <tr class="{% if payment.status.value == 'Vencido' %}payment-overdue{% elif payment.status.value == 'Parcial' %}payment-partial{% elif payment.status.value == 'Pago' %}payment-paid{% endif %}">
+                        <td>{{ payment.id }}</td>
+                        <td>
+                            {% if payment.invoice %}
+                            <a href="{{ url_for('invoices.view', invoice_id=payment.invoice.id) }}">
+                                {{ payment.invoice.invoice_number }}/{{ payment.invoice.series }}
+                            </a>
+                            {% else %}
+                            -
+                            {% endif %}
+                        </td>
+                        <td>
+                            <span class="badge bg-info">{{ payment.payment_method.value }}</span>
+                        </td>
+                        <td>{{ payment.due_date.strftime('%d/%m/%Y') }}</td>
+                        <td>{{ "%.2f"|format(payment.amount) }}</td>
+                        <td>
+                            {% if payment.status.value == 'Pendente' %}
+                            <span class="badge bg-warning">{{ payment.status.value }}</span>
+                            {% elif payment.status.value == 'Vencido' %}
+                            <span class="badge bg-danger">{{ payment.status.value }}</span>
+                            {% elif payment.status.value == 'Pago' %}
+                            <span class="badge bg-success">{{ payment.status.value }}</span>
+                            {% elif payment.status.value == 'Parcial' %}
+                            <span class="badge bg-info">{{ payment.status.value }}</span>
+                            {% else %}
+                            <span class="badge bg-secondary">{{ payment.status.value }}</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if payment.payment_date %}
+                            {{ payment.payment_date.strftime('%d/%m/%Y') }}
+                            {% else %}
+                            -
+                            {% endif %}
+                        </td>
+                        <td>
+                            <div class="btn-group">
+                                <a href="{{ url_for('payments.view', payment_id=payment.id) }}" class="btn btn-sm btn-info">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                                {% if payment.status.value != 'Pago' and payment.status.value != 'Cancelado' %}
+                                <a href="{{ url_for('payments.register_payment', payment_id=payment.id) }}" class="btn btn-sm btn-success">
+                                    <i class="fas fa-check"></i>
+                                </a>
+                                {% endif %}
+                                <a href="{{ url_for('payments.edit', payment_id=payment.id) }}" class="btn btn-sm btn-primary">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        
+        <!-- Paginação -->
+        <div class="mt-3">
+            {% if payments.pages > 1 %}
+            <nav aria-label="Navegação entre páginas">
+                <ul class="pagination justify-content-center">
+                    {% if payments.has_prev %}
+                    <li class="page-item">
+                        <a class="page-link" href="{{ url_for('payments.index', page=payments.prev_num, **request.args) }}">
+                            <i class="fas fa-angle-left"></i>
+                        </a>
+                    </li>
+                    {% else %}
+                    <li class="page-item disabled">
+                        <span class="page-link"><i class="fas fa-angle-left"></i></span>
+                    </li>
+                    {% endif %}
+                    
+                    {% for page_num in payments.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2) %}
+                        {% if page_num %}
+                            {% if page_num == payments.page %}
+                            <li class="page-item active">
+                                <span class="page-link">{{ page_num }}</span>
+                            </li>
+                            {% else %}
+                            <li class="page-item">
+                                <a class="page-link" href="{{ url_for('payments.index', page=page_num, **request.args) }}">
+                                    {{ page_num }}
+                                </a>
+                            </li>
+                            {% endif %}
+                        {% else %}
+                            <li class="page-item disabled">
+                                <span class="page-link">...</span>
+                            </li>
+                        {% endif %}
+                    {% endfor %}
+                    
+                    {% if payments.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="{{ url_for('payments.index', page=payments.next_num, **request.args) }}">
+                            <i class="fas fa-angle-right"></i>
+                        </a>
+                    </li>
+                    {% else %}
+                    <li class="page-item disabled">
+                        <span class="page-link"><i class="fas fa-angle-right"></i></span>
+                    </li>
+                    {% endif %}
+                </ul>
+            </nav>
+            {% endif %}
+            <p class="text-center text-muted mt-2">
+                Mostrando {{ payments.items|length }} de {{ payments.total }} pagamentos
+            </p>
+        </div>
+        {% else %}
+        <div class="text-center py-4">
+            <i class="fas fa-money-bill-wave fa-5x mb-3 text-muted"></i>
+            <p class="lead text-muted">Nenhum pagamento encontrado com os filtros aplicados.</p>
+            <a href="{{ url_for('payments.create') }}" class="btn btn-primary mt-2">
+                <i class="fas fa-plus me-1"></i> Criar Novo Pagamento
+            </a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    $(document).ready(function() {
+        // Inicializa o DataTable com suporte à ordenação
+        $('#pagamentosTable').DataTable({
+            "paging": false,
+            "searching": false,
+            "info": false,
+            "language": {
+                "url": "//cdn.datatables.net/plug-ins/1.10.25/i18n/Portuguese-Brasil.json"
+            }
+        });
+    });
+</script>
+{% endblock %}

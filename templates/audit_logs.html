@@ -1,0 +1,333 @@
+{% extends "base.html" %}
+
+{% block title %}Logs de Auditoria - Sistema de Gestão{% endblock %}
+
+{% block content %}
+<div class="d-sm-flex align-items-center justify-content-between mb-4">
+    <h1 class="h3 mb-0 text-light">
+        <i class="fas fa-clipboard-list me-2"></i>Logs de Auditoria
+    </h1>
+    <button class="btn btn-success btn-sm" onclick="exportLogs()">
+        <i class="fas fa-file-excel fa-sm text-white-50 me-1"></i> Exportar
+    </button>
+</div>
+
+<!-- Filtros -->
+<div class="card shadow mb-4">
+    <div class="card-header py-3">
+        <h6 class="m-0 font-weight-bold text-primary">Filtrar Logs</h6>
+    </div>
+    <div class="card-body">
+        <form method="GET" action="{{ url_for('audit_logs') }}">
+            <div class="row">
+                <div class="col-md-3 mb-3">
+                    <label class="form-label">Usuário</label>
+                    <select name="user_id" class="form-select">
+                        <option value="">Todos os usuários</option>
+                        {% for user in users %}
+                        <option value="{{ user.id }}" {% if request.args.get('user_id') == user.id|string %}selected{% endif %}>
+                            {{ user.username }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-3 mb-3">
+                    <label class="form-label">Ação</label>
+                    <select name="action" class="form-select">
+                        <option value="">Todas as ações</option>
+                        <option value="CREATE" {% if request.args.get('action') == 'CREATE' %}selected{% endif %}>Criar</option>
+                        <option value="UPDATE" {% if request.args.get('action') == 'UPDATE' %}selected{% endif %}>Atualizar</option>
+                        <option value="DELETE" {% if request.args.get('action') == 'DELETE' %}selected{% endif %}>Excluir</option>
+                        <option value="LOGIN" {% if request.args.get('action') == 'LOGIN' %}selected{% endif %}>Login</option>
+                        <option value="LOGOUT" {% if request.args.get('action') == 'LOGOUT' %}selected{% endif %}>Logout</option>
+                    </select>
+                </div>
+                <div class="col-md-3 mb-3">
+                    <label class="form-label">Tabela</label>
+                    <select name="table_name" class="form-select">
+                        <option value="">Todas as tabelas</option>
+                        <option value="products" {% if request.args.get('table_name') == 'products' %}selected{% endif %}>Produtos</option>
+                        <option value="invoices" {% if request.args.get('table_name') == 'invoices' %}selected{% endif %}>Notas Fiscais</option>
+                        <option value="customers" {% if request.args.get('table_name') == 'customers' %}selected{% endif %}>Clientes</option>
+                        <option value="suppliers" {% if request.args.get('table_name') == 'suppliers' %}selected{% endif %}>Fornecedores</option>
+                        <option value="payments" {% if request.args.get('table_name') == 'payments' %}selected{% endif %}>Pagamentos</option>
+                        <option value="users" {% if request.args.get('table_name') == 'users' %}selected{% endif %}>Usuários</option>
+                    </select>
+                </div>
+                <div class="col-md-3 mb-3">
+                    <label class="form-label">Data</label>
+                    <input type="date" name="date" class="form-control" value="{{ request.args.get('date', '') }}">
+                </div>
+                <div class="col-12 d-flex justify-content-end">
+                    <button type="submit" class="btn btn-primary me-2">
+                        <i class="fas fa-search fa-sm"></i> Filtrar
+                    </button>
+                    <a href="{{ url_for('audit_logs') }}" class="btn btn-secondary">
+                        <i class="fas fa-sync-alt fa-sm"></i> Limpar
+                    </a>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Lista de logs -->
+<div class="card shadow mb-4">
+    <div class="card-header py-3">
+        <h6 class="m-0 font-weight-bold text-primary">Registro de Atividades</h6>
+    </div>
+    <div class="card-body">
+        {% if logs %}
+        <div class="table-responsive">
+            <table class="table table-bordered table-hover" id="logsTable">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Data/Hora</th>
+                        <th>Usuário</th>
+                        <th>Ação</th>
+                        <th>Tabela</th>
+                        <th>ID Registro</th>
+                        <th>IP</th>
+                        <th>Detalhes</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for log in logs %}
+                    <tr>
+                        <td>{{ log.id }}</td>
+                        <td>{{ log.timestamp.strftime('%d/%m/%Y %H:%M:%S') }}</td>
+                        <td>
+                            {% if log.user %}
+                            {{ log.user.username }}
+                            {% else %}
+                            Sistema
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if log.action == 'CREATE' %}
+                            <span class="badge bg-success">Criar</span>
+                            {% elif log.action == 'UPDATE' %}
+                            <span class="badge bg-primary">Atualizar</span>
+                            {% elif log.action == 'DELETE' %}
+                            <span class="badge bg-danger">Excluir</span>
+                            {% elif log.action == 'LOGIN' %}
+                            <span class="badge bg-info">Login</span>
+                            {% elif log.action == 'LOGOUT' %}
+                            <span class="badge bg-secondary">Logout</span>
+                            {% else %}
+                            <span class="badge bg-dark">{{ log.action }}</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ log.table_name|title }}</td>
+                        <td>{{ log.row_id or '-' }}</td>
+                        <td>{{ log.ip_address or '-' }}</td>
+                        <td>
+                            <button class="btn btn-sm btn-info" data-bs-toggle="modal" data-bs-target="#logDetailModal{{ log.id }}">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                            
+                            <!-- Modal de detalhes -->
+                            <div class="modal fade" id="logDetailModal{{ log.id }}" tabindex="-1" aria-hidden="true">
+                                <div class="modal-dialog modal-lg">
+                                    <div class="modal-content">
+                                        <div class="modal-header">
+                                            <h5 class="modal-title">Detalhes do Log #{{ log.id }}</h5>
+                                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                        </div>
+                                        <div class="modal-body">
+                                            <div class="row mb-3">
+                                                <div class="col-md-6">
+                                                    <p><strong>Data/Hora:</strong> {{ log.timestamp.strftime('%d/%m/%Y %H:%M:%S') }}</p>
+                                                    <p><strong>Usuário:</strong> {{ log.user.username if log.user else 'Sistema' }}</p>
+                                                    <p><strong>Ação:</strong> {{ log.action }}</p>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <p><strong>Tabela:</strong> {{ log.table_name|title }}</p>
+                                                    <p><strong>ID do Registro:</strong> {{ log.row_id or '-' }}</p>
+                                                    <p><strong>IP:</strong> {{ log.ip_address or '-' }}</p>
+                                                </div>
+                                            </div>
+                                            
+                                            {% if log.old_values %}
+                                            <h6 class="font-weight-bold">Valores Anteriores:</h6>
+                                            <pre class="bg-light p-3 mb-3">{{ log.old_values }}</pre>
+                                            {% endif %}
+                                            
+                                            {% if log.new_values %}
+                                            <h6 class="font-weight-bold">Novos Valores:</h6>
+                                            <pre class="bg-light p-3">{{ log.new_values }}</pre>
+                                            {% endif %}
+                                        </div>
+                                        <div class="modal-footer">
+                                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        
+        <!-- Paginação -->
+        {% if pagination and pagination.pages > 1 %}
+        <nav aria-label="Paginação" class="mt-4">
+            <ul class="pagination justify-content-center">
+                {% if pagination.has_prev %}
+                <li class="page-item">
+                    <a class="page-link" href="{{ url_for('audit_logs', page=pagination.prev_num, **request.args) }}">Anterior</a>
+                </li>
+                {% else %}
+                <li class="page-item disabled">
+                    <a class="page-link" href="#">Anterior</a>
+                </li>
+                {% endif %}
+                
+                {% for page in pagination.iter_pages() %}
+                    {% if page %}
+                        {% if page == pagination.page %}
+                        <li class="page-item active">
+                            <a class="page-link" href="#">{{ page }}</a>
+                        </li>
+                        {% else %}
+                        <li class="page-item">
+                            <a class="page-link" href="{{ url_for('audit_logs', page=page, **request.args) }}">{{ page }}</a>
+                        </li>
+                        {% endif %}
+                    {% else %}
+                    <li class="page-item disabled">
+                        <a class="page-link" href="#">...</a>
+                    </li>
+                    {% endif %}
+                {% endfor %}
+                
+                {% if pagination.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="{{ url_for('audit_logs', page=pagination.next_num, **request.args) }}">Próximo</a>
+                </li>
+                {% else %}
+                <li class="page-item disabled">
+                    <a class="page-link" href="#">Próximo</a>
+                </li>
+                {% endif %}
+            </ul>
+        </nav>
+        {% endif %}
+        
+        {% else %}
+        <div class="text-center py-4">
+            <i class="fas fa-clipboard-list fa-5x mb-3 text-muted"></i>
+            <p class="lead text-muted">Nenhum log de auditoria encontrado.</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Estatísticas de auditoria -->
+<div class="row">
+    <div class="col-lg-6">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">Atividades por Usuário</h6>
+            </div>
+            <div class="card-body">
+                <div class="chart-pie pt-4 pb-2">
+                    <canvas id="userActivityChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-6">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">Tipos de Ação</h6>
+            </div>
+            <div class="card-body">
+                <div class="chart-pie pt-4 pb-2">
+                    <canvas id="actionTypesChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    $(document).ready(function() {
+        // Inicializa o DataTable
+        $('#logsTable').DataTable({
+            "paging": false,
+            "ordering": true,
+            "info": false,
+            "searching": false,
+            "language": {
+                "url": "//cdn.datatables.net/plug-ins/1.10.25/i18n/Portuguese-Brasil.json"
+            }
+        });
+        
+        // Gráficos
+        
+        // Atividades por usuário
+        var userContext = document.getElementById("userActivityChart");
+        if (userContext) {
+            // Simulação - em produção estes dados viriam do backend
+            var userChart = new Chart(userContext, {
+                type: 'doughnut',
+                data: {
+                    labels: ["Admin", "Gerente", "Vendedor", "Contador", "Estoquista"],
+                    datasets: [{
+                        data: [42, 23, 15, 8, 12],
+                        backgroundColor: ['#4e73df', '#1cc88a', '#36b9cc', '#f6c23e', '#e74a3b'],
+                        hoverBackgroundColor: ['#2e59d9', '#17a673', '#2c9faf', '#dda20a', '#be2617'],
+                    }]
+                },
+                options: {
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                        }
+                    }
+                }
+            });
+        }
+        
+        // Tipos de ação
+        var actionContext = document.getElementById("actionTypesChart");
+        if (actionContext) {
+            // Simulação - em produção estes dados viriam do backend
+            var actionChart = new Chart(actionContext, {
+                type: 'doughnut',
+                data: {
+                    labels: ["Criar", "Atualizar", "Excluir", "Login", "Logout"],
+                    datasets: [{
+                        data: [25, 40, 10, 15, 10],
+                        backgroundColor: ['#1cc88a', '#4e73df', '#e74a3b', '#36b9cc', '#858796'],
+                        hoverBackgroundColor: ['#17a673', '#2e59d9', '#be2617', '#2c9faf', '#60616f'],
+                    }]
+                },
+                options: {
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                        }
+                    }
+                }
+            });
+        }
+    });
+    
+    // Exportar logs
+    function exportLogs() {
+        // Aqui seria implementada a funcionalidade de exportação
+        alert('Exportação de logs será implementada em breve!');
+    }
+</script>
+{% endblock %}
